@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | KPN Traders - Cement Order Slip Portal</title>
+  <meta name="description" content="Authorized Staff Login for KPN TRADERS Cement Order Slip Generator.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700;800;900&family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&family=Outfit:wght@500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body.standalone-login {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0b1120 100%);
+      padding: 1.5rem;
+    }
+    .standalone-login .auth-card {
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+  </style>
+</head>
+
+<body class="theme-dark standalone-login">
+
+  <div class="auth-card">
+    <div class="auth-brand-header">
+      <div class="auth-logo-badge">
+        <i data-lucide="building-2"></i>
+      </div>
+      <h2 class="auth-company-name">KPN TRADERS</h2>
+      <p class="auth-portal-sub">CEMENT ORDER SLIP PORTAL</p>
+      <span class="auth-chip"><i data-lucide="lock"></i> Authorized Staff Login</span>
+    </div>
+
+    <!-- Auth Method Tabs: Quick PIN (Default) vs Password -->
+    <div class="auth-tabs" role="tablist">
+      <button type="button" class="auth-tab-btn active" id="tabPinMode" data-mode="pin" role="tab" aria-selected="true">
+        <i data-lucide="key-round"></i> Quick PIN
+      </button>
+      <button type="button" class="auth-tab-btn" id="tabPassMode" data-mode="password" role="tab" aria-selected="false">
+        <i data-lucide="user-check"></i> Password
+      </button>
+    </div>
+
+    <!-- Auth Error Notification Box -->
+    <div class="auth-error-box" id="authErrorBox" style="display: none;">
+      <i data-lucide="alert-circle"></i>
+      <span id="authErrorMsg">Invalid Credentials. Try again.</span>
+    </div>
+
+    <!-- Quick 4-Digit PIN Form -->
+    <form id="formPinAuth" class="auth-form-view" autocomplete="off" onsubmit="return false;">
+      <div class="form-group text-center">
+        <label for="inputPin">Enter 4-Digit Security PIN</label>
+        <div class="pin-input-container">
+          <input type="password" id="inputPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="••••" autofocus autocomplete="current-password">
+        </div>
+        <p class="auth-field-hint">Fast 4-digit PIN for instant godown access</p>
+      </div>
+
+      <div class="auth-remember-row">
+        <label class="checkbox-label" for="rememberMePin">
+          <input type="checkbox" id="rememberMePin" checked>
+          <span>Remember this device</span>
+        </label>
+      </div>
+
+      <button type="submit" id="btnSubmitPin" class="btn-primary auth-submit-btn">
+        <span>Unlock Portal</span>
+        <i data-lucide="arrow-right"></i>
+      </button>
+    </form>
+
+    <!-- Username & Password Form -->
+    <form id="formPassAuth" class="auth-form-view" style="display: none;" autocomplete="off" onsubmit="return false;">
+      <div class="form-group">
+        <label for="inputUsername">Username</label>
+        <div class="input-with-icon">
+          <i data-lucide="user"></i>
+          <input type="text" id="inputUsername" placeholder="e.g. admin" autocomplete="username">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="inputPassword">Password</label>
+        <div class="input-with-icon input-password-group">
+          <i data-lucide="lock"></i>
+          <input type="password" id="inputPassword" placeholder="••••••••" autocomplete="current-password">
+          <button type="button" class="btn-eye-toggle" id="btnTogglePasswordEye" title="Show/Hide Password" tabindex="-1">
+            <i data-lucide="eye" id="eyeIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="auth-remember-row">
+        <label class="checkbox-label" for="rememberMePass">
+          <input type="checkbox" id="rememberMePass" checked>
+          <span>Remember this device</span>
+        </label>
+      </div>
+
+      <button type="submit" id="btnSubmitPass" class="btn-primary auth-submit-btn">
+        <span>Sign In to Slip Portal</span>
+        <i data-lucide="arrow-right"></i>
+      </button>
+    </form>
+
+    <!-- Quick Demo Credentials Hint Box -->
+    <div class="auth-demo-hint">
+      <div class="hint-header">
+        <i data-lucide="info"></i>
+        <span>Default Credentials:</span>
+      </div>
+      <div class="hint-body">
+        <span>PIN: <strong>1234</strong></span> • <span>User: <strong>admin</strong></span> • <span>Pass: <strong>kpn123</strong></span>
+      </div>
+      <button type="button" class="btn-quick-autofill" id="btnQuickDemoFill">
+        <i data-lucide="sparkles"></i> 1-Click Auto Fill & Login
+      </button>
+    </div>
+
+    <div class="auth-footer-tag">
+      <span>KPN TRADERS • DAM ROAD, KRISHNAGIRI</span>
+    </div>
+  </div>
+
+  <script>
+    // Standalone Login Logic with automatic redirect to index.html
+    const STORAGE_KEY_AUTH = 'cement_order_auth_v1';
+    const STORAGE_KEY_SESSION = 'cement_order_session_v1';
+
+    const DEFAULT_AUTH = {
+      username: 'admin',
+      password: 'kpn123',
+      pin: '1234',
+      displayName: 'KPN Admin'
+    };
+
+    function getAuthCredentials() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY_AUTH);
+        return stored ? { ...DEFAULT_AUTH, ...JSON.parse(stored) } : { ...DEFAULT_AUTH };
+      } catch (e) {
+        return { ...DEFAULT_AUTH };
+      }
+    }
+
+    function checkActiveSession() {
+      try {
+        const session = localStorage.getItem(STORAGE_KEY_SESSION) || sessionStorage.getItem(STORAGE_KEY_SESSION);
+        if (session) {
+          window.location.replace('index.html');
+        }
+      } catch (e) {}
+    }
+
+    checkActiveSession();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+
+      const tabPinMode = document.getElementById('tabPinMode');
+      const tabPassMode = document.getElementById('tabPassMode');
+      const formPinAuth = document.getElementById('formPinAuth');
+      const formPassAuth = document.getElementById('formPassAuth');
+      const authErrorBox = document.getElementById('authErrorBox');
+      const authErrorMsg = document.getElementById('authErrorMsg');
+      const inputPin = document.getElementById('inputPin');
+      const inputUsername = document.getElementById('inputUsername');
+      const inputPassword = document.getElementById('inputPassword');
+      const rememberMePin = document.getElementById('rememberMePin');
+      const rememberMePass = document.getElementById('rememberMePass');
+      const btnTogglePasswordEye = document.getElementById('btnTogglePasswordEye');
+      const btnQuickDemoFill = document.getElementById('btnQuickDemoFill');
+
+      tabPinMode.addEventListener('click', () => {
+        tabPinMode.classList.add('active');
+        tabPassMode.classList.remove('active');
+        formPinAuth.style.display = 'block';
+        formPassAuth.style.display = 'none';
+        authErrorBox.style.display = 'none';
+        inputPin.focus();
+      });
+
+      tabPassMode.addEventListener('click', () => {
+        tabPassMode.classList.add('active');
+        tabPinMode.classList.remove('active');
+        formPassAuth.style.display = 'block';
+        formPinAuth.style.display = 'none';
+        authErrorBox.style.display = 'none';
+        inputUsername.focus();
+      });
+
+      if (btnTogglePasswordEye) {
+        btnTogglePasswordEye.addEventListener('click', () => {
+          const isPass = inputPassword.type === 'password';
+          inputPassword.type = isPass ? 'text' : 'password';
+          const icon = btnTogglePasswordEye.querySelector('i');
+          if (icon) {
+            icon.setAttribute('data-lucide', isPass ? 'eye-off' : 'eye');
+            lucide.createIcons();
+          }
+        });
+      }
+
+      function showError(msg) {
+        authErrorMsg.textContent = msg;
+        authErrorBox.style.display = 'flex';
+        authErrorBox.classList.remove('shake');
+        void authErrorBox.offsetWidth; // trigger reflow
+        authErrorBox.classList.add('shake');
+      }
+
+      function successLogin(remember) {
+        const creds = getAuthCredentials();
+        const payload = JSON.stringify({
+          authenticated: true,
+          username: creds.username,
+          displayName: creds.displayName,
+          loginAt: new Date().toISOString()
+        });
+        if (remember) {
+          localStorage.setItem(STORAGE_KEY_SESSION, payload);
+          sessionStorage.removeItem(STORAGE_KEY_SESSION);
+        } else {
+          sessionStorage.setItem(STORAGE_KEY_SESSION, payload);
+          localStorage.removeItem(STORAGE_KEY_SESSION);
+        }
+        window.location.replace('index.html');
+      }
+
+      // PIN Submit
+      formPinAuth.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const creds = getAuthCredentials();
+        const enteredPin = inputPin.value.trim();
+        if (enteredPin === creds.pin) {
+          successLogin(rememberMePin.checked);
+        } else {
+          showError('Invalid 4-digit PIN. Try 1234');
+          inputPin.value = '';
+          inputPin.focus();
+        }
+      });
+
+      // Password Submit
+      formPassAuth.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const creds = getAuthCredentials();
+        const user = inputUsername.value.trim();
+        const pass = inputPassword.value;
+        if (user.toLowerCase() === creds.username.toLowerCase() && pass === creds.password) {
+          successLogin(rememberMePass.checked);
+        } else {
+          showError('Invalid Username or Password.');
+          inputPassword.value = '';
+          inputPassword.focus();
+        }
+      });
+
+      // Quick Demo Fill
+      if (btnQuickDemoFill) {
+        btnQuickDemoFill.addEventListener('click', () => {
+          const creds = getAuthCredentials();
+          inputPin.value = creds.pin;
+          inputUsername.value = creds.username;
+          inputPassword.value = creds.password;
+          successLogin(true);
+        });
+      }
+    });
+  </script>
+</body>
+
+</html>
