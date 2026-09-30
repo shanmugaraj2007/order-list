@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cement Order Slip Generator | Bill-Book Size</title>
+  <meta name="description"
+    content="Fast, mobile-friendly traditional cement order slip generator for godown and truck loading. Compact bill-book paper size printing and PDF download.">
+
+  <!-- Google Fonts: Inter for UI, Roboto Mono & Courier Prime for authentic bill-book typography -->
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700;800;900&family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&family=Outfit:wght@500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- html2canvas for Image Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- jsPDF for Compact PDF Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="theme-dark">
+
+  <!-- Top App Navigation Bar -->
+  <header class="app-nav no-print">
+    <div class="nav-container">
+      <div class="brand-group">
+        <div class="brand-icon">
+          <i data-lucide="truck"></i>
+        </div>
+        <div class="brand-text">
+          <h1>Cement Order Slip</h1>
+          <span class="badge-tag">KPN Traders Template</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button id="btnOpenHistory" class="nav-btn" title="Order History">
+          <i data-lucide="history"></i>
+          <span class="btn-text">History</span>
+          <span id="historyBadge" class="nav-counter-badge">0</span>
+        </button>
+        <button id="btnOpenVehicles" class="nav-btn" title="Manage Saved Trucks">
+          <i data-lucide="container"></i>
+          <span class="btn-text">Vehicles</span>
+        </button>
+        <button id="btnOpenSettings" class="nav-btn" title="Company & Slip Settings">
+          <i data-lucide="settings"></i>
+          <span class="btn-text">Settings</span>
+        </button>
+        <button id="btnToggleTheme" class="nav-btn-icon" title="Toggle Theme">
+          <i data-lucide="sun" id="themeIcon"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main App Layout -->
+  <main class="app-main no-print">
+    <div class="app-layout-grid">
+
+      <!-- LEFT COLUMN: Quick Order Form -->
+      <section class="form-section card">
+        <div class="card-header">
+          <div class="title-with-pill">
+            <i data-lucide="file-text" class="header-icon"></i>
+            <h2>New Cement Order</h2>
+          </div>
+          <button type="button" id="btnResetForm" class="btn-ghost-sm" title="Clear and Start Fresh">
+            <i data-lucide="rotate-ccw"></i> Reset
+          </button>
+        </div>
+
+        <form id="orderForm" autocomplete="off" onsubmit="return false;">
+
+          <!-- Order Meta Bar (Date & Order Number) -->
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="orderDate">Date</label>
+              <div class="input-with-icon">
+                <i data-lucide="calendar"></i>
+                <input type="date" id="orderDate" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="orderNumber">Order Slip No.</label>
+              <div class="input-with-icon">
+                <i data-lucide="hash"></i>
+                <input type="text" id="orderNumber" placeholder="001" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Greeting Selector -->
+          <div class="form-group">
+            <label>Salutation / Greeting</label>
+            <div class="pill-group" id="greetingGroup">
+              <button type="button" class="pill-btn active" data-value="Good Morning">Good Morning</button>
+              <button type="button" class="pill-btn" data-value="Good Afternoon">Good Afternoon</button>
+              <button type="button" class="pill-btn" data-value="Good Evening">Good Evening</button>
+            </div>
+            <input type="hidden" id="greetingVal" value="Good Morning">
+          </div>
+
+          <!-- Cement Company Selection -->
+          <div class="form-group">
+            <div class="label-row">
+              <label for="cementCompany">Cement Company / Godown</label>
+              <span class="sub-hint">Tap below or type custom</span>
+            </div>
+            <div class="input-with-icon">
+              <i data-lucide="building-2"></i>
+              <input list="cementCompanyList" id="cementCompany" placeholder="e.g. ULTRATECH" value="ULTRATECH"
+                required>
+              <datalist id="cementCompanyList">
+                <option value="ULTRATECH"></option>
+                <option value="RAMCO"></option>
+                <option value="ZUARI"></option>
+                <option value="CHETTINAD"></option>
+                <option value="KCP"></option>
+                <option value="JSW"></option>
+              </datalist>
+            </div>
+            <!-- Quick Chips for User's Cement Brands -->
+            <div class="quick-chips" id="companyChips">
+              <button type="button" class="chip-item active">ULTRATECH</button>
+              <button type="button" class="chip-item">RAMCO</button>
+              <button type="button" class="chip-item">ZUARI</button>
+              <button type="button" class="chip-item">CHETTINAD</button>
+              <button type="button" class="chip-item">KCP</button>
+              <button type="button" class="chip-item">JSW</button>
+            </div>
+          </div>
+
+          <!-- Vehicle Number with Quick Select -->
+          <div class="form-group">
+            <div class="label-row">
+              <label for="vehicleNumber">Truck / Vehicle Number</label>
+              <button type="button" id="btnQuickAddTruck" class="link-btn" title="Add to saved trucks">+ Save this
+                truck</button>
+            </div>
+            <div class="input-with-icon">
+              <i data-lucide="truck"></i>
+              <input type="text" id="vehicleNumber" placeholder="e.g. TN 24 WE 1994" class="uppercase-input" required>
+            </div>
+            <!-- Saved Trucks Quick Badges -->
+            <div class="truck-chips-container">
+              <span class="chips-label">Saved Trucks:</span>
+              <div class="quick-chips" id="savedTruckChips">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Quantity and Unit Row -->
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="orderQuantity">Quantity to Load</label>
+              <div class="input-with-icon">
+                <i data-lucide="boxes"></i>
+                <input type="number" id="orderQuantity" min="1" step="1" placeholder="100" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Unit</label>
+              <div class="pill-group" id="unitGroup">
+                <button type="button" class="pill-btn active" data-value="Bags">Bags</button>
+                <button type="button" class="pill-btn" data-value="Tons">Tons</button>
+              </div>
+              <input type="hidden" id="unitVal" value="Bags">
+            </div>
+          </div>
+
+          <!-- Quick Quantity Buttons -->
+          <div class="quick-qty-bar">
+            <span class="chips-label">Quick Bags:</span>
+            <div class="qty-btn-group">
+              <button type="button" class="qty-btn" data-qty="50">50</button>
+              <button type="button" class="qty-btn" data-qty="100">100</button>
+              <button type="button" class="qty-btn" data-qty="150">150</button>
+              <button type="button" class="qty-btn" data-qty="200">200</button>
+              <button type="button" class="qty-btn" data-qty="300">300</button>
+              <button type="button" class="qty-btn" data-qty="400">400</button>
+            </div>
+          </div>
+
+          <!-- Optional Cement Type / Grade -->
+          <div class="form-group">
+            <div class="label-row">
+              <label for="cementType">Cement Grade / Type (Optional)</label>
+              <span class="sub-hint">PPC / OPC 53 </span>
+            </div>
+            <div class="pill-group-wrap" id="typeGroup">
+              <button type="button" class="pill-btn active" data-value="">None (Default)</button>
+              <button type="button" class="pill-btn" data-value="PPC">PPC</button>
+              <button type="button" class="pill-btn" data-value="OPC 53">OPC 53</button>
+              <button type="button" class="pill-btn" data-value="Crete">OPC 43</button>
+              <button type="button" class="pill-btn" data-value="Composite">Composite</button>
+              <button type="button" class="pill-btn" data-value="Super">Super</button>
+            </div>
+            <input type="hidden" id="cementTypeVal" value="">
+          </div>
+
+          <!-- Optional Remark / Driver Note -->
+          <div class="form-group">
+            <div class="label-row">
+              <label for="orderRemark">Driver / Loading Note (Optional)</label>
+            </div>
+            <input type="text" id="orderRemark" placeholder="e.g. Call before loading / Unload at Site 2">
+          </div>
+
+          <!-- Primary Submit / Save Action -->
+          <div class="form-actions-primary">
+            <button type="button" id="btnSaveAndGenerate" class="btn-primary-large">
+              <i data-lucide="check-circle-2"></i> Save & Generate Slip
+            </button>
+            <button type="button" id="btnNewOrderQuick" class="btn-secondary-large">
+              <i data-lucide="plus-circle"></i> New Order
+            </button>
+          </div>
+
+        </form>
+      </section>
+
+      <!-- RIGHT COLUMN: Bill-Book Slip Preview & Instant Action Toolbar -->
+      <section class="preview-section">
+
+        <!-- Action Control Bar -->
+        <div class="preview-toolbar card">
+          <div class="toolbar-title">
+            <span class="live-dot"></span>
+            <h3>Order Slip Preview</h3>
+            <button type="button" id="btnQuickToggleSig" class="btn-sig-toggle active" title="Toggle Auto-Signature ON/OFF">
+              <i data-lucide="pen-tool"></i> <span id="sigToggleLabel">Sign: Auto ON</span>
+            </button>
+            <span class="size-indicator" id="sizeIndicatorBadge">5.5" × 4.25"</span>
+          </div>
+
+          <div class="toolbar-button-group">
+            <button type="button" id="btnPrintSlip" class="action-btn btn-print"
+              title="Print Slip on Small Bill-Book Paper">
+              <i data-lucide="printer"></i>
+              <span>PRINT SLIP</span>
+            </button>
+
+            <button type="button" id="btnDownloadPdf" class="action-btn btn-pdf" title="Download Small Bill-Book PDF">
+              <i data-lucide="file-down"></i>
+              <span>PDF</span>
+            </button>
+
+            <button type="button" id="btnDownloadImg" class="action-btn btn-img" title="Download Clean PNG Image">
+              <i data-lucide="image"></i>
+              <span>Image</span>
+            </button>
+
+            <button type="button" id="btnShareWhatsApp" class="action-btn btn-whatsapp" title="Share via WhatsApp">
+              <i data-lucide="send"></i>
+              <span>WhatsApp</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Physical Slip Simulation Viewport -->
+        <div class="slip-viewport">
+          <div class="slip-stand-wrapper" id="slipCaptureContainer">
+
+            <!-- THE PHYSICAL BILL-BOOK SLIP (Target for Print & Export) -->
+            <div class="bill-book-slip kpn-pad-template" id="billBookSlip" data-paper-style="kpn-blue">
+
+              <!-- 1. SOLID TOP BANNER HEADER (Royal Blue) -->
+              <header class="slip-top-banner" id="slipTopBanner">
+                <h2 class="banner-company-title" id="slipCompanyName">KPN TRADERS</h2>
+                <p class="banner-company-address" id="slipAddressLine">1/434-G KPN TRADERS, DAM ROAD, KRISHNAGIRI
+                  -635101.</p>
+                <div class="banner-owner-sub" id="slipOwnerLine" style="display: none;">Owner: SHANMUGARAJ | 9842100000
+                </div>
+              </header>
+
+              <!-- Inner Printable Boundary -->
+              <div class="slip-inner-pad">
+
+                <!-- DATE & NO BAR (Right Aligned Date as in Template) -->
+                <div class="slip-meta-pad-bar">
+                  <div class="meta-pad-left" id="slipOrderNoWrap">
+                    <span class="meta-pad-lbl">ORDER NO:</span>
+                    <span class="meta-pad-val bold" id="slipOrderNo">001</span>
+                  </div>
+                  <div class="meta-pad-right">
+                    <span class="meta-pad-lbl">DATE:</span>
+                    <span class="meta-pad-val bold" id="slipDate">30/09/2026</span>
+                  </div>
+                </div>
+
+                <!-- 3. MAIN ORDER LETTER BODY (CONTINUOUS TEXT) -->
+                <div class="slip-letter-body">
+                  <div class="letter-salutation-top">DEAR SIR,</div>
+                  <div class="letter-continuous-text">
+                    <span class="letter-greeting-span" id="slipGreetingText">Good Morning Sir,</span> I have sent my
+                    truck <span class="highlight-truck" id="slipTruckNumber">TN 24 WE 1994</span> to <span
+                      class="highlight-company" id="slipCementCompany">ULTRATECH</span><span
+                      id="slipCementTypeSuffix"></span>. Please load <span class="highlight-quantity"
+                      id="slipQuantityText">100 Bags</span> in it.
+                  </div>
+
+                  <!-- Optional Driver Note inside Slip -->
+                  <div class="slip-note-box" id="slipNoteContainer" style="display: none;">
+                    <strong>Note:</strong> <span id="slipNoteText"></span>
+                  </div>
+                </div>
+
+                <!-- 4. SIGNATURE AREA (Bottom Right) -->
+                <footer class="slip-pad-footer">
+                  <div class="slip-signature-box">
+                    <div class="for-company" id="slipForCompany">FOR KPN TRADERS</div>
+                    <div class="signature-space" id="signatureSpace">
+                      <img id="slipSignatureImg" class="slip-signature-img" src="assets/signature_clean.png" alt="Authorized Signature">
+                    </div>
+                    <div class="signature-title">SIGNATURE</div>
+                  </div>
+                </footer>
+
+              </div> <!-- /slip-inner-pad -->
+
+              <!-- 5. SOLID BOTTOM FOOTER BANNER (Royal Blue) -->
+              <footer class="slip-bottom-banner" id="slipBottomBanner">
+                <span class="banner-footer-text" id="slipFooterTags">★ CEMENT ★ STEEL ★ ASIANPAINTS</span>
+              </footer>
+
+            </div> <!-- /bill-book-slip -->
+
+          </div> <!-- /slip-stand-wrapper -->
+
+          <!-- Paper Quick Style Selector Bar -->
+          <div class="slip-style-picker-bar">
+            <span class="picker-label"><i data-lucide="palette"></i> Pad Theme:</span>
+            <div class="style-pills">
+              <button type="button" class="style-pill active" data-style="kpn-blue"
+                title="Royal Blue Header & Footer (Uploaded Template)">Royal Blue Pad</button>
+              <button type="button" class="style-pill" data-style="kpn-navy" title="Deep Navy Pad">Navy Blue</button>
+              <button type="button" class="style-pill" data-style="kpn-green" title="Forest Green Pad">Emerald</button>
+              <button type="button" class="style-pill" data-style="kpn-maroon" title="Deep Maroon Pad">Maroon</button>
+              <button type="button" class="style-pill" data-style="classic-mono"
+                title="Black & White Monochrome">Black/White</button>
+            </div>
+          </div>
+
+        </div> <!-- /slip-viewport -->
+
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: SETTINGS (Saved Company Details, Paper Size, etc) -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="modalSettings" style="display: none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i data-lucide="settings"></i>
+          <h3>Company & Template Settings</h3>
+        </div>
+        <button type="button" class="modal-close" data-close="modalSettings">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <form id="settingsForm">
+
+          <h4 class="section-subtitle"><i data-lucide="building"></i> Company Information (Printed on Top Banner)</h4>
+          <div class="form-group">
+            <label for="settingCompanyName">Company / Shop Name *</label>
+            <input type="text" id="settingCompanyName" placeholder="e.g. KPN TRADERS" required>
+          </div>
+
+          <div class="form-group">
+            <label for="settingAddress">Shop / Godown Address (Printed on Banner Subtitle) *</label>
+            <input type="text" id="settingAddress"
+              placeholder="e.g. 1/434-G KPN TRADERS, DAM ROAD, KRISHNAGIRI -635101.">
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="settingOwnerName">Owner Name (Optional)</label>
+              <input type="text" id="settingOwnerName" placeholder="e.g. SHANMUGARAJ">
+            </div>
+            <div class="form-group">
+              <label for="settingMobile">Owner Mobile Number (Optional)</label>
+              <input type="tel" id="settingMobile" placeholder="e.g. 9842100000">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="settingFooterTags">Bottom Footer Banner Text *</label>
+            <input type="text" id="settingFooterTags" placeholder="e.g. ★ CEMENT  ★  STEEL  ★  ASIANPAINTS">
+          </div>
+
+          <hr class="modal-divider">
+
+          <h4 class="section-subtitle"><i data-lucide="pen-tool"></i> Digital Signature Settings</h4>
+          <div class="form-group checkbox-form-group">
+            <label class="checkbox-label" for="settingAutoSignature">
+              <input type="checkbox" id="settingAutoSignature" checked>
+              <span><strong>Auto-Generate Signature on Order Slip</strong></span>
+            </label>
+            <span class="sub-hint">Automatically prints your handwritten signature on all generated slips</span>
+          </div>
+
+          <div class="signature-preview-setting-box" id="sigSettingPreviewBox">
+            <div class="sig-preview-thumb">
+              <img id="sigSettingThumb" src="assets/signature_clean.png" alt="Signature Preview">
+            </div>
+            <div class="sig-preview-tools">
+              <label class="btn-ghost-sm upload-sig-btn" style="cursor: pointer;">
+                <i data-lucide="upload"></i> Upload Image
+                <input type="file" id="settingSigFileInput" accept="image/*" style="display: none;">
+              </label>
+              <button type="button" id="btnResetDefaultSig" class="btn-ghost-sm" title="Restore Default Signature">
+                <i data-lucide="rotate-ccw"></i> Default
+              </button>
+            </div>
+          </div>
+
+          <hr class="modal-divider">
+
+          <h4 class="section-subtitle"><i data-lucide="printer"></i> Print & Paper Size Settings</h4>
+
+          <div class="form-group">
+            <label for="settingPaperPreset">Paper Size Preset</label>
+            <select id="settingPaperPreset">
+              <option value="billbook-small">Standard Bill Book Small (5.5" × 4.25" / ~140mm × 108mm)</option>
+              <option value="billbook-tall">Tall Bill Book Pad (4.5" × 6.5" / ~114mm × 165mm)</option>
+              <option value="billbook-medium">Bill Book Medium (6.0" × 4.5" / ~152mm × 114mm)</option>
+              <option value="thermal-80">Thermal Receipt (80mm / 3.15" width)</option>
+              <option value="custom">Custom Dimensions</option>
+            </select>
+          </div>
+
+          <div class="form-row-2" id="customDimensionsRow" style="display: none;">
+            <div class="form-group">
+              <label for="settingPaperWidth">Width (Inches)</label>
+              <input type="number" id="settingPaperWidth" step="0.1" min="3" max="8.5" value="5.5">
+            </div>
+            <div class="form-group">
+              <label for="settingPaperHeight">Height (Inches)</label>
+              <input type="number" id="settingPaperHeight" step="0.1" min="3" max="11" value="4.25">
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="settingSlipFont">Slip Font Style</label>
+              <select id="settingSlipFont">
+                <option value="font-montserrat">Bold Impact Sans (Montserrat - Template Match)</option>
+                <option value="font-sans">Modern Clean Sans (Inter)</option>
+                <option value="font-courier">Traditional Typewriter (Courier Prime)</option>
+                <option value="font-mono">Clean Monospace (Space Mono)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="settingAutoOrderNum">Next Order Number</label>
+              <input type="number" id="settingAutoOrderNum" min="1" value="1">
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-ghost" data-close="modalSettings">Cancel</button>
+        <button type="button" id="btnSaveSettings" class="btn-primary">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: SAVED VEHICLES MANAGER                           -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="modalVehicles" style="display: none;">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i data-lucide="container"></i>
+          <h3>Saved Trucks & Vehicles</h3>
+        </div>
+        <button type="button" class="modal-close" data-close="modalVehicles">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="add-truck-bar">
+          <input type="text" id="newTruckInput" placeholder="Enter Vehicle No. (e.g. TN 24 WE 1994)"
+            class="uppercase-input">
+          <button type="button" id="btnAddTruckModal" class="btn-primary">
+            <i data-lucide="plus"></i> Add Truck
+          </button>
+        </div>
+
+        <div class="saved-trucks-list" id="savedTrucksList">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-primary" data-close="modalVehicles">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: ORDER HISTORY                                     -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="modalHistory" style="display: none;">
+    <div class="modal-window modal-wide">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i data-lucide="history"></i>
+          <h3>Order Slip History</h3>
+        </div>
+        <div class="header-right-tools">
+          <button type="button" id="btnClearAllHistory" class="btn-danger-sm" title="Clear all saved history">
+            <i data-lucide="trash-2"></i> Clear All
+          </button>
+          <button type="button" class="modal-close" data-close="modalHistory">&times;</button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div class="history-search-bar">
+          <div class="input-with-icon">
+            <i data-lucide="search"></i>
+            <input type="text" id="historySearchInput"
+              placeholder="Search by Truck, Cement Company, Order No, or Date...">
+          </div>
+        </div>
+
+        <div class="history-table-container">
+          <table class="history-table" id="historyTable">
+            <thead>
+              <tr>
+                <th>Order No</th>
+                <th>Date</th>
+                <th>Company</th>
+                <th>Truck No</th>
+                <th>Qty</th>
+                <th>Grade</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+          <div class="empty-history" id="emptyHistoryMsg" style="display: none;">
+            <i data-lucide="inbox"></i>
+            <p>No order slips created yet. Create your first slip in seconds!</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <span class="footer-note" id="historyCountNote">0 Total Orders Saved</span>
+        <button type="button" class="btn-primary" data-close="modalHistory">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Pure Print Container (Isolated for exact printer rendering) -->
+  <div id="printContainer" class="print-only-container"></div>
+
+  <!-- Application Script -->
+  <script src="js/app.js"></script>
+</body>
+
+</html>
