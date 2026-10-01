@@ -88,6 +88,7 @@ const el = {
   btnNewOrderQuick: document.getElementById('btnNewOrderQuick'),
   btnResetForm: document.getElementById('btnResetForm'),
   btnQuickAddTruck: document.getElementById('btnQuickAddTruck'),
+  btnManageTrucksQuick: document.getElementById('btnManageTrucksQuick'),
   btnPrintSlip: document.getElementById('btnPrintSlip'),
   btnDownloadPdf: document.getElementById('btnDownloadPdf'),
   btnDownloadImg: document.getElementById('btnDownloadImg'),
@@ -105,6 +106,7 @@ const el = {
   
   modalSettings: document.getElementById('modalSettings'),
   modalVehicles: document.getElementById('modalVehicles'),
+  btnClearAllTrucks: document.getElementById('btnClearAllTrucks'),
   modalHistory: document.getElementById('modalHistory'),
   
   // Settings Form
@@ -726,6 +728,9 @@ function setupEventListeners() {
   // Modal Open Buttons
   el.btnOpenSettings.addEventListener('click', () => openModal(el.modalSettings, populateSettingsForm));
   el.btnOpenVehicles.addEventListener('click', () => openModal(el.modalVehicles, renderVehiclesModalList));
+  if (el.btnManageTrucksQuick) {
+    el.btnManageTrucksQuick.addEventListener('click', () => openModal(el.modalVehicles, renderVehiclesModalList));
+  }
   el.btnOpenHistory.addEventListener('click', () => openModal(el.modalHistory, renderHistoryTable));
 
   // Modal Close Handlers
@@ -814,6 +819,22 @@ function setupEventListeners() {
     el.newTruckInput.value = '';
     showToast(`Added ${val}`, 'success');
   });
+
+  if (el.btnClearAllTrucks) {
+    el.btnClearAllTrucks.addEventListener('click', () => {
+      if (!state.vehicles || state.vehicles.length === 0) {
+        showToast('No saved trucks to clear', 'info');
+        return;
+      }
+      if (confirm('Are you sure you want to delete all saved truck numbers?')) {
+        state.vehicles = [];
+        saveVehiclesToStorage();
+        renderVehiclesModalList();
+        renderSavedTruckChips();
+        showToast('All saved trucks deleted', 'info');
+      }
+    });
+  }
 
   // History Search & Clear
   el.historySearchInput.addEventListener('input', (e) => {
@@ -987,31 +1008,58 @@ function updateSigToggleButton() {
 // SAVED VEHICLES CHIPS & MANAGEMENT
 // =========================================================
 function renderSavedTruckChips() {
+  if (!el.savedTruckChips) return;
   el.savedTruckChips.innerHTML = '';
-  if (state.vehicles.length === 0) {
-    el.savedTruckChips.innerHTML = '<span class="sub-hint">No trucks saved yet</span>';
+  if (!state.vehicles || state.vehicles.length === 0) {
+    el.savedTruckChips.innerHTML = '<span class="sub-hint">No trucks saved yet. Use "+ Save this truck" above.</span>';
     return;
   }
 
-  state.vehicles.forEach(truck => {
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'chip-item';
-    if (el.vehicleNumber.value === truck) chip.classList.add('active');
-    chip.textContent = truck;
-    chip.addEventListener('click', () => {
+  state.vehicles.forEach((truck, index) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip-item truck-chip';
+    if (el.vehicleNumber && el.vehicleNumber.value === truck) {
+      chip.classList.add('active');
+    }
+
+    const textSpan = document.createElement('span');
+    textSpan.className = 'truck-chip-text';
+    textSpan.textContent = truck;
+    textSpan.title = `Click to select ${truck}`;
+    textSpan.addEventListener('click', () => {
       el.vehicleNumber.value = truck;
       syncFormToState();
       updateSlipPreview();
-      renderSavedTruckChips(); // Update active chip highlight
+      renderSavedTruckChips();
     });
+
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'chip-delete-btn';
+    delBtn.innerHTML = '&times;';
+    delBtn.title = `Delete ${truck} from saved trucks`;
+    delBtn.setAttribute('aria-label', `Delete ${truck}`);
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`Remove truck "${truck}" from saved list?`)) {
+        state.vehicles.splice(index, 1);
+        saveVehiclesToStorage();
+        renderSavedTruckChips();
+        renderVehiclesModalList();
+        showToast(`Truck ${truck} deleted`, 'info');
+      }
+    });
+
+    chip.appendChild(textSpan);
+    chip.appendChild(delBtn);
     el.savedTruckChips.appendChild(chip);
   });
 }
 
 function renderVehiclesModalList() {
+  if (!el.savedTrucksList) return;
   el.savedTrucksList.innerHTML = '';
-  if (state.vehicles.length === 0) {
+  if (!state.vehicles || state.vehicles.length === 0) {
     el.savedTrucksList.innerHTML = '<p class="empty-history">No saved trucks.</p>';
     return;
   }
@@ -1041,11 +1089,13 @@ function renderVehiclesModalList() {
     });
 
     row.querySelector('[data-delete-index]').addEventListener('click', () => {
-      state.vehicles.splice(index, 1);
-      saveVehiclesToStorage();
-      renderVehiclesModalList();
-      renderSavedTruckChips();
-      showToast('Truck removed', 'info');
+      if (confirm(`Remove truck "${truck}" from saved list?`)) {
+        state.vehicles.splice(index, 1);
+        saveVehiclesToStorage();
+        renderVehiclesModalList();
+        renderSavedTruckChips();
+        showToast('Truck removed', 'info');
+      }
     });
 
     el.savedTrucksList.appendChild(row);

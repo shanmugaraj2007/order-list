@@ -273,7 +273,10 @@
             </div>
             <!-- Saved Trucks Quick Badges -->
             <div class="truck-chips-container">
-              <span class="chips-label">Saved Trucks:</span>
+              <div class="truck-chips-header">
+                <span class="chips-label">Saved Trucks:</span>
+                <button type="button" id="btnManageTrucksQuick" class="link-btn" title="Manage all saved trucks">Manage Trucks</button>
+              </div>
               <div class="quick-chips" id="savedTruckChips">
                 <!-- Dynamically populated -->
               </div>
@@ -630,7 +633,12 @@
           <i data-lucide="container"></i>
           <h3>Saved Trucks & Vehicles</h3>
         </div>
-        <button type="button" class="modal-close" data-close="modalVehicles">&times;</button>
+        <div class="header-right-tools">
+          <button type="button" id="btnClearAllTrucks" class="btn-danger-sm" title="Clear all saved trucks">
+            <i data-lucide="trash-2"></i> Clear All
+          </button>
+          <button type="button" class="modal-close" data-close="modalVehicles">&times;</button>
+        </div>
       </div>
 
       <div class="modal-body">
