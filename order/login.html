@@ -4,8 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login | KPN Traders - Cement Order Slip Portal</title>
-  <meta name="description" content="Authorized Staff Login for KPN TRADERS Cement Order Slip Generator.">
+  <title>Login & Sign Up | KPN Traders - Cement Order Slip Portal</title>
+  <meta name="description" content="Authorized Staff Login and Registration for KPN TRADERS Cement Order Slip Generator.">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,10 +27,68 @@
       background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0b1120 100%);
       padding: 1.5rem;
     }
+
     .standalone-login .auth-card {
       max-width: 440px;
       width: 100%;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    .auth-success-box {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+      border-radius: 10px;
+      padding: 0.7rem 0.9rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1.2rem;
+    }
+
+    .auth-success-box svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      color: #10b981;
+    }
+
+    .auth-switch-prompt {
+      text-align: center;
+      margin-top: 1.25rem;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    .auth-switch-link {
+      background: none;
+      border: none;
+      color: #38bdf8;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0 0.2rem;
+      font-size: 0.85rem;
+      font-family: inherit;
+      transition: color 0.15s ease;
+    }
+
+    .auth-switch-link:hover {
+      color: #7dd3fc;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 480px) {
+      .form-row-2 {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -44,95 +102,127 @@
       </div>
       <h2 class="auth-company-name">KPN TRADERS</h2>
       <p class="auth-portal-sub">CEMENT ORDER SLIP PORTAL</p>
-      <span class="auth-chip"><i data-lucide="lock"></i> Authorized Staff Login</span>
+      <span class="auth-chip"><i data-lucide="shield-check"></i> Staff Portal Access</span>
     </div>
 
-    <!-- Auth Method Tabs: Quick PIN (Default) vs Password -->
+    <!-- Auth Method Tabs: Sign In vs Sign Up -->
     <div class="auth-tabs" role="tablist">
-      <button type="button" class="auth-tab-btn active" id="tabPinMode" data-mode="pin" role="tab" aria-selected="true">
-        <i data-lucide="key-round"></i> Quick PIN
+      <button type="button" class="auth-tab-btn active" id="tabLogin" data-mode="login" role="tab" aria-selected="true">
+        <i data-lucide="log-in"></i> Sign In
       </button>
-      <button type="button" class="auth-tab-btn" id="tabPassMode" data-mode="password" role="tab" aria-selected="false">
-        <i data-lucide="user-check"></i> Password
+      <button type="button" class="auth-tab-btn" id="tabRegister" data-mode="register" role="tab" aria-selected="false">
+        <i data-lucide="user-plus"></i> Sign Up
       </button>
     </div>
 
-    <!-- Auth Error Notification Box -->
+    <!-- Auth Notification Boxes -->
     <div class="auth-error-box" id="authErrorBox" style="display: none;">
       <i data-lucide="alert-circle"></i>
       <span id="authErrorMsg">Invalid Credentials. Try again.</span>
     </div>
 
-    <!-- Quick 4-Digit PIN Form -->
-    <form id="formPinAuth" class="auth-form-view" autocomplete="off" onsubmit="return false;">
-      <div class="form-group text-center">
-        <label for="inputPin">Enter 4-Digit Security PIN</label>
-        <div class="pin-input-container">
-          <input type="password" id="inputPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="••••" autofocus autocomplete="current-password">
-        </div>
-        <p class="auth-field-hint">Fast 4-digit PIN for instant godown access</p>
-      </div>
+    <div class="auth-success-box" id="authSuccessBox" style="display: none;">
+      <i data-lucide="check-circle"></i>
+      <span id="authSuccessMsg">Success! Redirecting...</span>
+    </div>
 
-      <div class="auth-remember-row">
-        <label class="checkbox-label" for="rememberMePin">
-          <input type="checkbox" id="rememberMePin" checked>
-          <span>Remember this device</span>
-        </label>
-      </div>
-
-      <button type="submit" id="btnSubmitPin" class="btn-primary auth-submit-btn">
-        <span>Unlock Portal</span>
-        <i data-lucide="arrow-right"></i>
-      </button>
-    </form>
-
-    <!-- Username & Password Form -->
-    <form id="formPassAuth" class="auth-form-view" style="display: none;" autocomplete="off" onsubmit="return false;">
+    <!-- 1. SIGN IN FORM -->
+    <form id="formLogin" class="auth-form-view" autocomplete="off" onsubmit="return false;">
       <div class="form-group">
-        <label for="inputUsername">Username</label>
+        <label for="loginUsername">Username</label>
         <div class="input-with-icon">
           <i data-lucide="user"></i>
-          <input type="text" id="inputUsername" placeholder="e.g. admin" autocomplete="username">
+          <input type="text" id="loginUsername" placeholder="Enter username" autocomplete="username" autofocus>
         </div>
       </div>
 
       <div class="form-group">
-        <label for="inputPassword">Password</label>
+        <label for="loginPassword">Password</label>
         <div class="input-with-icon input-password-group">
           <i data-lucide="lock"></i>
-          <input type="password" id="inputPassword" placeholder="••••••••" autocomplete="current-password">
-          <button type="button" class="btn-eye-toggle" id="btnTogglePasswordEye" title="Show/Hide Password" tabindex="-1">
-            <i data-lucide="eye" id="eyeIcon"></i>
+          <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password">
+          <button type="button" class="btn-eye-toggle" id="btnToggleLoginPass" title="Show/Hide Password" tabindex="-1">
+            <i data-lucide="eye"></i>
           </button>
         </div>
       </div>
 
       <div class="auth-remember-row">
-        <label class="checkbox-label" for="rememberMePass">
-          <input type="checkbox" id="rememberMePass" checked>
+        <label class="checkbox-label" for="rememberMeLogin">
+          <input type="checkbox" id="rememberMeLogin" checked>
           <span>Remember this device</span>
         </label>
       </div>
 
-      <button type="submit" id="btnSubmitPass" class="btn-primary auth-submit-btn">
-        <span>Sign In to Slip Portal</span>
+      <button type="submit" id="btnSubmitLogin" class="btn-primary auth-submit-btn">
+        <span>Sign In</span>
         <i data-lucide="arrow-right"></i>
       </button>
+
+      <div class="auth-switch-prompt">
+        Don't have an account?
+        <button type="button" class="auth-switch-link" id="linkToRegister">Sign Up</button>
+      </div>
     </form>
 
-    <!-- Quick Demo Credentials Hint Box -->
-    <div class="auth-demo-hint">
-      <div class="hint-header">
-        <i data-lucide="info"></i>
-        <span>Default Credentials:</span>
+    <!-- 2. SIGN UP FORM -->
+    <form id="formRegister" class="auth-form-view" style="display: none;" autocomplete="off" onsubmit="return false;">
+      <div class="form-group">
+        <label for="regFullName">Full / Staff Name</label>
+        <div class="input-with-icon">
+          <i data-lucide="id-card"></i>
+          <input type="text" id="regFullName" placeholder="e.g. Shanmugaraj / Staff">
+        </div>
       </div>
-      <div class="hint-body">
-        <span>PIN: <strong>1234</strong></span> • <span>User: <strong>admin</strong></span> • <span>Pass: <strong>kpn123</strong></span>
+
+      <div class="form-group">
+        <label for="regUsername">Choose Username</label>
+        <div class="input-with-icon">
+          <i data-lucide="at-sign"></i>
+          <input type="text" id="regUsername" placeholder="e.g. shanmugam" autocomplete="username">
+        </div>
       </div>
-      <button type="button" class="btn-quick-autofill" id="btnQuickDemoFill">
-        <i data-lucide="sparkles"></i> 1-Click Auto Fill & Login
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label for="regPassword">Password</label>
+          <div class="input-with-icon input-password-group">
+            <i data-lucide="lock"></i>
+            <input type="password" id="regPassword" placeholder="Create password" autocomplete="new-password">
+            <button type="button" class="btn-eye-toggle" id="btnToggleRegPass" title="Show/Hide Password" tabindex="-1">
+              <i data-lucide="eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="regConfirmPassword">Confirm Password</label>
+          <div class="input-with-icon">
+            <i data-lucide="shield-check"></i>
+            <input type="password" id="regConfirmPassword" placeholder="Re-type password" autocomplete="new-password">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="regPin">4-Digit Security PIN (Optional)</label>
+        <div class="input-with-icon">
+          <i data-lucide="key-round"></i>
+          <input type="password" id="regPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="e.g. 1234">
+        </div>
+        <p class="auth-field-hint">Used for quick authorization</p>
+      </div>
+
+      <button type="submit" id="btnSubmitRegister" class="btn-primary auth-submit-btn">
+        <span>Create Account & Sign In</span>
+        <i data-lucide="arrow-right"></i>
       </button>
-    </div>
+
+      <div class="auth-switch-prompt">
+        Already have an account?
+        <button type="button" class="auth-switch-link" id="linkToLogin">Sign In</button>
+      </div>
+    </form>
 
     <div class="auth-footer-tag">
       <span>KPN TRADERS • DAM ROAD, KRISHNAGIRI</span>
@@ -140,23 +230,39 @@
   </div>
 
   <script>
-    // Standalone Login Logic with automatic redirect to index.html
     const STORAGE_KEY_AUTH = 'cement_order_auth_v1';
     const STORAGE_KEY_SESSION = 'cement_order_session_v1';
+    const STORAGE_KEY_USERS = 'cement_order_users_v1';
 
-    const DEFAULT_AUTH = {
+    const DEFAULT_ADMIN = {
       username: 'admin',
       password: 'kpn123',
       pin: '1234',
       displayName: 'KPN Admin'
     };
 
-    function getAuthCredentials() {
+    function getUsers() {
       try {
-        const stored = localStorage.getItem(STORAGE_KEY_AUTH);
-        return stored ? { ...DEFAULT_AUTH, ...JSON.parse(stored) } : { ...DEFAULT_AUTH };
+        const stored = localStorage.getItem(STORAGE_KEY_USERS);
+        if (stored) {
+          const list = JSON.parse(stored);
+          if (Array.isArray(list) && list.length > 0) return list;
+        }
       } catch (e) {
-        return { ...DEFAULT_AUTH };
+        console.error('Failed reading user store:', e);
+      }
+      const initialUsers = [DEFAULT_ADMIN];
+      try {
+        localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(initialUsers));
+      } catch (e) {}
+      return initialUsers;
+    }
+
+    function saveUsers(users) {
+      try {
+        localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+      } catch (e) {
+        console.error('Failed saving users:', e);
       }
     }
 
@@ -164,7 +270,10 @@
       try {
         const session = localStorage.getItem(STORAGE_KEY_SESSION) || sessionStorage.getItem(STORAGE_KEY_SESSION);
         if (session) {
-          window.location.replace('index.html');
+          const parsed = JSON.parse(session);
+          if (parsed && parsed.authenticated) {
+            window.location.replace('index.html');
+          }
         }
       } catch (e) {}
     }
@@ -174,43 +283,82 @@
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
 
-      const tabPinMode = document.getElementById('tabPinMode');
-      const tabPassMode = document.getElementById('tabPassMode');
-      const formPinAuth = document.getElementById('formPinAuth');
-      const formPassAuth = document.getElementById('formPassAuth');
+      const tabLogin = document.getElementById('tabLogin');
+      const tabRegister = document.getElementById('tabRegister');
+      const formLogin = document.getElementById('formLogin');
+      const formRegister = document.getElementById('formRegister');
+      const linkToRegister = document.getElementById('linkToRegister');
+      const linkToLogin = document.getElementById('linkToLogin');
+
       const authErrorBox = document.getElementById('authErrorBox');
       const authErrorMsg = document.getElementById('authErrorMsg');
-      const inputPin = document.getElementById('inputPin');
-      const inputUsername = document.getElementById('inputUsername');
-      const inputPassword = document.getElementById('inputPassword');
-      const rememberMePin = document.getElementById('rememberMePin');
-      const rememberMePass = document.getElementById('rememberMePass');
-      const btnTogglePasswordEye = document.getElementById('btnTogglePasswordEye');
-      const btnQuickDemoFill = document.getElementById('btnQuickDemoFill');
+      const authSuccessBox = document.getElementById('authSuccessBox');
+      const authSuccessMsg = document.getElementById('authSuccessMsg');
 
-      tabPinMode.addEventListener('click', () => {
-        tabPinMode.classList.add('active');
-        tabPassMode.classList.remove('active');
-        formPinAuth.style.display = 'block';
-        formPassAuth.style.display = 'none';
+      const loginUsername = document.getElementById('loginUsername');
+      const loginPassword = document.getElementById('loginPassword');
+      const rememberMeLogin = document.getElementById('rememberMeLogin');
+      const btnToggleLoginPass = document.getElementById('btnToggleLoginPass');
+
+      const regFullName = document.getElementById('regFullName');
+      const regUsername = document.getElementById('regUsername');
+      const regPassword = document.getElementById('regPassword');
+      const regConfirmPassword = document.getElementById('regConfirmPassword');
+      const regPin = document.getElementById('regPin');
+      const btnToggleRegPass = document.getElementById('btnToggleRegPass');
+
+      function hideAlerts() {
         authErrorBox.style.display = 'none';
-        inputPin.focus();
-      });
+        authSuccessBox.style.display = 'none';
+      }
 
-      tabPassMode.addEventListener('click', () => {
-        tabPassMode.classList.add('active');
-        tabPinMode.classList.remove('active');
-        formPassAuth.style.display = 'block';
-        formPinAuth.style.display = 'none';
+      function showError(msg) {
+        authSuccessBox.style.display = 'none';
+        authErrorMsg.textContent = msg;
+        authErrorBox.style.display = 'flex';
+        authErrorBox.classList.remove('shake');
+        void authErrorBox.offsetWidth;
+        authErrorBox.classList.add('shake');
+      }
+
+      function showSuccess(msg) {
         authErrorBox.style.display = 'none';
-        inputUsername.focus();
-      });
+        authSuccessMsg.textContent = msg;
+        authSuccessBox.style.display = 'flex';
+      }
 
-      if (btnTogglePasswordEye) {
-        btnTogglePasswordEye.addEventListener('click', () => {
-          const isPass = inputPassword.type === 'password';
-          inputPassword.type = isPass ? 'text' : 'password';
-          const icon = btnTogglePasswordEye.querySelector('i');
+      function switchMode(mode) {
+        hideAlerts();
+        if (mode === 'login') {
+          tabLogin.classList.add('active');
+          tabLogin.setAttribute('aria-selected', 'true');
+          tabRegister.classList.remove('active');
+          tabRegister.setAttribute('aria-selected', 'false');
+          formLogin.style.display = 'block';
+          formRegister.style.display = 'none';
+          loginUsername.focus();
+        } else {
+          tabRegister.classList.add('active');
+          tabRegister.setAttribute('aria-selected', 'true');
+          tabLogin.classList.remove('active');
+          tabLogin.setAttribute('aria-selected', 'false');
+          formRegister.style.display = 'block';
+          formLogin.style.display = 'none';
+          regFullName.focus();
+        }
+      }
+
+      tabLogin.addEventListener('click', () => switchMode('login'));
+      tabRegister.addEventListener('click', () => switchMode('register'));
+      linkToRegister.addEventListener('click', () => switchMode('register'));
+      linkToLogin.addEventListener('click', () => switchMode('login'));
+
+      function setupPasswordToggle(btn, inputEl) {
+        if (!btn || !inputEl) return;
+        btn.addEventListener('click', () => {
+          const isPass = inputEl.type === 'password';
+          inputEl.type = isPass ? 'text' : 'password';
+          const icon = btn.querySelector('i');
           if (icon) {
             icon.setAttribute('data-lucide', isPass ? 'eye-off' : 'eye');
             lucide.createIcons();
@@ -218,22 +366,17 @@
         });
       }
 
-      function showError(msg) {
-        authErrorMsg.textContent = msg;
-        authErrorBox.style.display = 'flex';
-        authErrorBox.classList.remove('shake');
-        void authErrorBox.offsetWidth; // trigger reflow
-        authErrorBox.classList.add('shake');
-      }
+      setupPasswordToggle(btnToggleLoginPass, loginPassword);
+      setupPasswordToggle(btnToggleRegPass, regPassword);
 
-      function successLogin(remember) {
-        const creds = getAuthCredentials();
+      function establishSession(user, remember) {
         const payload = JSON.stringify({
           authenticated: true,
-          username: creds.username,
-          displayName: creds.displayName,
+          username: user.username,
+          displayName: user.displayName || user.username,
           loginAt: new Date().toISOString()
         });
+
         if (remember) {
           localStorage.setItem(STORAGE_KEY_SESSION, payload);
           sessionStorage.removeItem(STORAGE_KEY_SESSION);
@@ -241,48 +384,129 @@
           sessionStorage.setItem(STORAGE_KEY_SESSION, payload);
           localStorage.removeItem(STORAGE_KEY_SESSION);
         }
+
+        localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify({
+          username: user.username,
+          password: user.password,
+          pin: user.pin || '1234',
+          displayName: user.displayName || user.username
+        }));
+
         window.location.replace('index.html');
       }
 
-      // PIN Submit
-      formPinAuth.addEventListener('submit', (e) => {
+      formLogin.addEventListener('submit', (e) => {
         e.preventDefault();
-        const creds = getAuthCredentials();
-        const enteredPin = inputPin.value.trim();
-        if (enteredPin === creds.pin) {
-          successLogin(rememberMePin.checked);
+        hideAlerts();
+
+        const userVal = loginUsername.value.trim();
+        const passVal = loginPassword.value;
+
+        if (!userVal) {
+          showError('Please enter your username.');
+          loginUsername.focus();
+          return;
+        }
+
+        if (!passVal) {
+          showError('Please enter your password.');
+          loginPassword.focus();
+          return;
+        }
+
+        const users = getUsers();
+        const matched = users.find(u => 
+          u.username.toLowerCase() === userVal.toLowerCase() && u.password === passVal
+        );
+
+        if (matched) {
+          showSuccess('Login successful! Redirecting...');
+          setTimeout(() => {
+            establishSession(matched, rememberMeLogin.checked);
+          }, 350);
         } else {
-          showError('Invalid 4-digit PIN. Try 1234');
-          inputPin.value = '';
-          inputPin.focus();
+          showError('Invalid username or password. Please try again.');
+          loginPassword.value = '';
+          loginPassword.focus();
         }
       });
 
-      // Password Submit
-      formPassAuth.addEventListener('submit', (e) => {
+      formRegister.addEventListener('submit', (e) => {
         e.preventDefault();
-        const creds = getAuthCredentials();
-        const user = inputUsername.value.trim();
-        const pass = inputPassword.value;
-        if (user.toLowerCase() === creds.username.toLowerCase() && pass === creds.password) {
-          successLogin(rememberMePass.checked);
-        } else {
-          showError('Invalid Username or Password.');
-          inputPassword.value = '';
-          inputPassword.focus();
-        }
-      });
+        hideAlerts();
 
-      // Quick Demo Fill
-      if (btnQuickDemoFill) {
-        btnQuickDemoFill.addEventListener('click', () => {
-          const creds = getAuthCredentials();
-          inputPin.value = creds.pin;
-          inputUsername.value = creds.username;
-          inputPassword.value = creds.password;
-          successLogin(true);
-        });
-      }
+        const nameVal = regFullName.value.trim();
+        const userVal = regUsername.value.trim();
+        const passVal = regPassword.value;
+        const confirmVal = regConfirmPassword.value;
+        const pinVal = regPin.value.trim();
+
+        if (!nameVal) {
+          showError('Please enter your full or staff name.');
+          regFullName.focus();
+          return;
+        }
+
+        if (!userVal) {
+          showError('Please choose a username.');
+          regUsername.focus();
+          return;
+        }
+
+        if (userVal.length < 3) {
+          showError('Username must be at least 3 characters long.');
+          regUsername.focus();
+          return;
+        }
+
+        if (!passVal) {
+          showError('Please enter a password.');
+          regPassword.focus();
+          return;
+        }
+
+        if (passVal.length < 4) {
+          showError('Password must be at least 4 characters.');
+          regPassword.focus();
+          return;
+        }
+
+        if (passVal !== confirmVal) {
+          showError('Passwords do not match. Please re-enter.');
+          regConfirmPassword.value = '';
+          regConfirmPassword.focus();
+          return;
+        }
+
+        if (pinVal && (pinVal.length !== 4 || !/^\d{4}$/.test(pinVal))) {
+          showError('Security PIN must be exactly 4 numbers (0-9).');
+          regPin.focus();
+          return;
+        }
+
+        const users = getUsers();
+        const exists = users.some(u => u.username.toLowerCase() === userVal.toLowerCase());
+        if (exists) {
+          showError('Username already taken. Please choose another username.');
+          regUsername.focus();
+          return;
+        }
+
+        const newUser = {
+          username: userVal,
+          password: passVal,
+          displayName: nameVal,
+          pin: pinVal || '1234'
+        };
+
+        users.push(newUser);
+        saveUsers(users);
+
+        showSuccess('Account created successfully! Logging you in...');
+        setTimeout(() => {
+          establishSession(newUser, true);
+        }, 600);
+      });
     });
   </script>
 </body>
