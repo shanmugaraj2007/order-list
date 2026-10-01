@@ -83,8 +83,18 @@ const el = {
   cementTypeVal: document.getElementById('cementTypeVal'),
   orderRemark: document.getElementById('orderRemark'),
   
-  // Buttons
   btnSaveAndGenerate: document.getElementById('btnSaveAndGenerate'),
+  btnNextStep: document.getElementById('btnNextStep'),
+  btnSaveAndShare: document.getElementById('btnSaveAndShare'),
+  btnSaveOnly: document.getElementById('btnSaveOnly'),
+  btnEditOrderBack: document.getElementById('btnEditOrderBack'),
+  btnBackToFormBottom: document.getElementById('btnBackToFormBottom'),
+  btnNewOrderStep2: document.getElementById('btnNewOrderStep2'),
+  stepTab1: document.getElementById('stepTab1'),
+  stepTab2: document.getElementById('stepTab2'),
+  stepConnector: document.getElementById('stepConnector'),
+  step1Section: document.getElementById('step1Section'),
+  step2Section: document.getElementById('step2Section'),
   btnNewOrderQuick: document.getElementById('btnNewOrderQuick'),
   btnResetForm: document.getElementById('btnResetForm'),
   btnQuickAddTruck: document.getElementById('btnQuickAddTruck'),
@@ -702,15 +712,40 @@ function setupEventListeners() {
   });
 
   // Primary Actions
-  el.btnSaveAndGenerate.addEventListener('click', handleSaveAndGenerate);
+  if (el.btnNextStep) {
+    el.btnNextStep.addEventListener('click', () => goToStep(2));
+  }
+  if (el.stepTab1) {
+    el.stepTab1.addEventListener('click', () => goToStep(1));
+  }
+  if (el.stepTab2) {
+    el.stepTab2.addEventListener('click', () => goToStep(2));
+  }
+  if (el.btnEditOrderBack) {
+    el.btnEditOrderBack.addEventListener('click', () => goToStep(1));
+  }
+  if (el.btnBackToFormBottom) {
+    el.btnBackToFormBottom.addEventListener('click', () => goToStep(1));
+  }
+  if (el.btnNewOrderStep2) {
+    el.btnNewOrderStep2.addEventListener('click', handleNewOrder);
+  }
+  if (el.btnSaveAndShare) {
+    el.btnSaveAndShare.addEventListener('click', handleSaveAndShare);
+  }
+  if (el.btnSaveOnly) {
+    el.btnSaveOnly.addEventListener('click', () => handleSaveOnly(true));
+  }
+
+  if (el.btnSaveAndGenerate) el.btnSaveAndGenerate.addEventListener('click', handleSaveAndGenerate);
   el.btnNewOrderQuick.addEventListener('click', handleNewOrder);
   el.btnResetForm.addEventListener('click', handleResetForm);
 
   // Print & Export Actions
-  el.btnPrintSlip.addEventListener('click', handlePrintSlip);
-  el.btnDownloadPdf.addEventListener('click', handleDownloadPdf);
-  el.btnDownloadImg.addEventListener('click', handleDownloadImage);
-  el.btnShareWhatsApp.addEventListener('click', handleShareWhatsApp);
+  if (el.btnPrintSlip) el.btnPrintSlip.addEventListener('click', handlePrintSlip);
+  if (el.btnDownloadPdf) el.btnDownloadPdf.addEventListener('click', handleDownloadPdf);
+  if (el.btnDownloadImg) el.btnDownloadImg.addEventListener('click', handleDownloadImage);
+  if (el.btnShareWhatsApp) el.btnShareWhatsApp.addEventListener('click', handleShareWhatsApp);
 
   // Theme Toggle
   el.btnToggleTheme.addEventListener('click', toggleTheme);
@@ -1105,14 +1140,82 @@ function renderVehiclesModalList() {
 }
 
 // =========================================================
-// ORDER ACTIONS (SAVE, NEW, PRINT, PDF, IMAGE, WHATSAPP)
+// TWO-STEP ORDER NAVIGATION & SUMMARY
 // =========================================================
-function handleSaveAndGenerate() {
-  if (!el.orderForm.reportValidity()) {
-    showToast('Please fill all required fields', 'danger');
-    return;
+let currentStep = 1;
+
+function goToStep(step) {
+  if (step === 2) {
+    if (!el.orderForm.reportValidity()) {
+      showToast('Please fill all required fields', 'danger');
+      return;
+    }
+    syncFormToState();
+    updateSlipPreview();
+    updateStep2Summary();
   }
 
+  currentStep = step;
+
+  if (step === 1) {
+    if (el.step1Section) el.step1Section.style.display = 'block';
+    if (el.step2Section) el.step2Section.style.display = 'none';
+    if (el.stepTab1) {
+      el.stepTab1.classList.add('active');
+      el.stepTab1.classList.remove('completed');
+    }
+    if (el.stepTab2) {
+      el.stepTab2.classList.remove('active', 'completed');
+    }
+    if (el.stepConnector) {
+      el.stepConnector.classList.remove('active');
+    }
+  } else if (step === 2) {
+    if (el.step1Section) el.step1Section.style.display = 'none';
+    if (el.step2Section) el.step2Section.style.display = 'block';
+    if (el.stepTab1) {
+      el.stepTab1.classList.remove('active');
+      el.stepTab1.classList.add('completed');
+    }
+    if (el.stepTab2) {
+      el.stepTab2.classList.add('active');
+    }
+    if (el.stepConnector) {
+      el.stepConnector.classList.add('active');
+    }
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateStep2Summary() {
+  const sOrder = document.getElementById('step2SummaryOrder');
+  const sTruck = document.getElementById('step2SummaryTruck');
+  const sCompany = document.getElementById('step2SummaryCompany');
+  const sQty = document.getElementById('step2SummaryQty');
+
+  if (sOrder) sOrder.textContent = '#' + (state.currentOrder.orderNo || '001');
+  if (sTruck) sTruck.textContent = state.currentOrder.vehicleNumber || '—';
+  if (sCompany) sCompany.textContent = state.currentOrder.cementCompany || '—';
+  if (sQty) sQty.textContent = `${state.currentOrder.quantity || 0} ${state.currentOrder.unit || 'Bags'}`;
+
+  const pill = document.getElementById('saveStatusPill');
+  if (pill) {
+    const isSaved = state.history.some(h => h.orderNo === state.currentOrder.orderNo && h.vehicle === state.currentOrder.vehicleNumber);
+    if (isSaved) {
+      pill.textContent = 'Saved to Cloud ✓';
+      pill.className = 'action-badge-pill save-pill saved-active';
+    } else {
+      pill.textContent = 'Save to Cloud';
+      pill.className = 'action-badge-pill save-pill';
+    }
+  }
+}
+
+// =========================================================
+// ORDER ACTIONS (SAVE, NEW, PRINT, PDF, IMAGE, WHATSAPP)
+// =========================================================
+function handleSaveOnly(showNotification = true) {
   syncFormToState();
 
   const newOrderEntry = {
@@ -1128,19 +1231,40 @@ function handleSaveAndGenerate() {
     remark: state.currentOrder.remark
   };
 
-  // Add to beginning of history
-  state.history.unshift(newOrderEntry);
+  const existingIdx = state.history.findIndex(h => h.orderNo === newOrderEntry.orderNo && h.vehicle === newOrderEntry.vehicle);
+  if (existingIdx !== -1) {
+    state.history[existingIdx] = newOrderEntry;
+  } else {
+    state.history.unshift(newOrderEntry);
+  }
+
   saveHistoryToStorage(newOrderEntry);
 
-  // Increment next auto order number in settings
   const currentNum = parseInt(state.currentOrder.orderNo, 10);
   if (!isNaN(currentNum)) {
     state.settings.nextOrderNum = currentNum + 1;
     saveSettingsToStorage();
   }
 
-  updateSlipPreview();
-  showToast(`Order #${newOrderEntry.orderNo} saved successfully!`, 'success');
+  const pill = document.getElementById('saveStatusPill');
+  if (pill) {
+    pill.textContent = 'Saved to Cloud ✓';
+    pill.className = 'action-badge-pill save-pill saved-active';
+  }
+
+  if (showNotification) {
+    showToast(`Order #${newOrderEntry.orderNo} saved successfully!`, 'success');
+  }
+}
+
+async function handleSaveAndShare() {
+  handleSaveOnly(false);
+  showToast(`Order #${state.currentOrder.orderNo} saved! Opening WhatsApp...`, 'info');
+  await handleShareWhatsApp();
+}
+
+function handleSaveAndGenerate() {
+  handleSaveOnly(true);
 }
 
 function handleNewOrder() {
@@ -1160,6 +1284,7 @@ function handleNewOrder() {
 
   syncFormToState();
   updateSlipPreview();
+  goToStep(1);
   showToast(`Prepared New Order Slip #${el.orderNumber.value}`);
 }
 
@@ -1401,6 +1526,7 @@ function loadOrderIntoSlip(order) {
   updateSlipPreview();
   renderSavedTruckChips();
   updateCompanyChipsHighlight();
+  goToStep(2);
 }
 
 // =========================================================

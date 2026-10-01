@@ -185,9 +185,31 @@
 
   <!-- Main App Layout -->
   <main class="app-main no-print">
-    <div class="app-layout-grid">
 
-      <!-- LEFT COLUMN: Quick Order Form -->
+    <!-- Steps Navigation Header -->
+    <div class="steps-nav-header" id="stepsNavHeader">
+      <div class="step-nav-tab active" id="stepTab1">
+        <span class="step-nav-badge">1</span>
+        <div class="step-nav-info">
+          <span class="step-nav-title">1. Order Details</span>
+          <span class="step-nav-subtitle">Enter cement & vehicle info</span>
+        </div>
+      </div>
+      <div class="step-nav-connector" id="stepConnector"></div>
+      <div class="step-nav-tab" id="stepTab2">
+        <span class="step-nav-badge">2</span>
+        <div class="step-nav-info">
+          <span class="step-nav-title">2. Save, Share & Download</span>
+          <span class="step-nav-subtitle">WhatsApp share, save, download</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- STEP 1: ORDER INPUT FORM                                -->
+    <!-- ======================================================== -->
+    <div id="step1Section">
+      <!-- Quick Order Form -->
       <section class="form-section card">
         <div class="card-header">
           <div class="title-with-pill">
@@ -341,10 +363,10 @@
             <input type="text" id="orderRemark" placeholder="e.g. Call before loading / Unload at Site 2">
           </div>
 
-          <!-- Primary Submit / Save Action -->
+          <!-- Primary Next Step Action -->
           <div class="form-actions-primary">
-            <button type="button" id="btnSaveAndGenerate" class="btn-primary-large">
-              <i data-lucide="check-circle-2"></i> Save & Generate Slip
+            <button type="button" id="btnNextStep" class="btn-primary-large btn-next-step">
+              <span>Next</span> <i data-lucide="arrow-right"></i>
             </button>
             <button type="button" id="btnNewOrderQuick" class="btn-secondary-large">
               <i data-lucide="plus-circle"></i> New Order
@@ -353,44 +375,127 @@
 
         </form>
       </section>
+    </div> <!-- /#step1Section -->
 
-      <!-- RIGHT COLUMN: Bill-Book Slip Preview & Instant Action Toolbar -->
-      <section class="preview-section">
+    <!-- ======================================================== -->
+    <!-- STEP 2: REVIEW, SAVE, SHARE & DOWNLOAD                   -->
+    <!-- ======================================================== -->
+    <div id="step2Section" style="display: none;">
+      <div class="step2-layout-grid">
 
-        <!-- Action Control Bar -->
-        <div class="preview-toolbar card">
-          <div class="toolbar-title">
-            <span class="live-dot"></span>
-            <h3>Order Slip Preview</h3>
-            <button type="button" id="btnQuickToggleSig" class="btn-sig-toggle active" title="Toggle Auto-Signature ON/OFF">
-              <i data-lucide="pen-tool"></i> <span id="sigToggleLabel">Sign: Auto ON</span>
-            </button>
-            <span class="size-indicator" id="sizeIndicatorBadge">5.5" × 4.25"</span>
-          </div>
-
-          <div class="toolbar-button-group">
-            <button type="button" id="btnPrintSlip" class="action-btn btn-print"
-              title="Print Slip on Small Bill-Book Paper">
-              <i data-lucide="printer"></i>
-              <span>PRINT SLIP</span>
-            </button>
-
-            <button type="button" id="btnDownloadPdf" class="action-btn btn-pdf" title="Download Small Bill-Book PDF">
-              <i data-lucide="file-down"></i>
-              <span>PDF</span>
-            </button>
-
-            <button type="button" id="btnDownloadImg" class="action-btn btn-img" title="Download Clean PNG Image">
-              <i data-lucide="image"></i>
-              <span>Image</span>
-            </button>
-
-            <button type="button" id="btnShareWhatsApp" class="action-btn btn-whatsapp" title="Share via WhatsApp">
-              <i data-lucide="send"></i>
-              <span>WhatsApp</span>
+        <!-- LEFT COLUMN: Action Options Panel -->
+        <section class="step2-action-panel card">
+          <div class="step2-card-header">
+            <div class="step2-title-badge">
+              <i data-lucide="check-circle-2"></i>
+              <div>
+                <h3>Order Slip Ready</h3>
+                <p class="step2-sub">Choose an action for this order slip</p>
+              </div>
+            </div>
+            <button type="button" id="btnEditOrderBack" class="btn-ghost-sm" title="Go back and edit details">
+              <i data-lucide="arrow-left"></i> Edit Details
             </button>
           </div>
-        </div>
+
+          <!-- Quick Summary Bar -->
+          <div class="step2-summary-bar">
+            <div class="s-item"><span class="s-label">Slip No:</span> <strong id="step2SummaryOrder">#001</strong></div>
+            <div class="s-item"><span class="s-label">Truck:</span> <strong id="step2SummaryTruck" class="s-highlight">TN 24 WE 1994</strong></div>
+            <div class="s-item"><span class="s-label">Company:</span> <strong id="step2SummaryCompany">ULTRATECH</strong></div>
+            <div class="s-item"><span class="s-label">Qty:</span> <strong id="step2SummaryQty">100 Bags</strong></div>
+          </div>
+
+          <!-- The 3 Action Options Requested by User -->
+          <div class="step2-action-buttons">
+            <!-- 1. SAVE & SHARE -->
+            <button type="button" id="btnSaveAndShare" class="step2-action-card-btn action-save-share" title="Save order to records and share slip image directly via WhatsApp">
+              <div class="action-btn-icon-wrapper whatsapp-bg">
+                <i data-lucide="send"></i>
+              </div>
+              <div class="action-btn-texts">
+                <div class="action-title-row">
+                  <span class="action-title">Save & Share</span>
+                  <span class="action-badge-pill whatsapp-pill">WhatsApp</span>
+                </div>
+                <p class="action-desc">Save order to cloud database & share slip image directly via WhatsApp without filling storage</p>
+              </div>
+              <i data-lucide="arrow-right" class="action-arrow"></i>
+            </button>
+
+            <!-- 2. SAVE ORDER -->
+            <button type="button" id="btnSaveOnly" class="step2-action-card-btn action-save-only" title="Save order slip to database and history">
+              <div class="action-btn-icon-wrapper save-bg">
+                <i data-lucide="save"></i>
+              </div>
+              <div class="action-btn-texts">
+                <div class="action-title-row">
+                  <span class="action-title">Save Order</span>
+                  <span class="action-badge-pill save-pill" id="saveStatusPill">Save to Cloud</span>
+                </div>
+                <p class="action-desc">Save slip to MongoDB database & order history log without sharing</p>
+              </div>
+              <i data-lucide="arrow-right" class="action-arrow"></i>
+            </button>
+
+            <!-- 3. DOWNLOAD -->
+            <div class="step2-download-section">
+              <div class="download-section-header">
+                <span class="download-section-title"><i data-lucide="download"></i> Download Slip:</span>
+              </div>
+              <div class="download-btn-row">
+                <button type="button" id="btnDownloadImg" class="step2-sub-btn btn-img-sub" title="Download Clean PNG Slip Image">
+                  <i data-lucide="image"></i>
+                  <div class="sub-btn-texts">
+                    <strong>Download Image</strong>
+                    <span>Clean PNG slip</span>
+                  </div>
+                </button>
+
+                <button type="button" id="btnDownloadPdf" class="step2-sub-btn btn-pdf-sub" title="Download Compact Bill-Book PDF">
+                  <i data-lucide="file-down"></i>
+                  <div class="sub-btn-texts">
+                    <strong>Download PDF</strong>
+                    <span>Bill-book format PDF</span>
+                  </div>
+                </button>
+
+                <button type="button" id="btnPrintSlip" class="step2-sub-btn btn-print-sub" title="Print Slip directly to printer">
+                  <i data-lucide="printer"></i>
+                  <div class="sub-btn-texts">
+                    <strong>Print Slip</strong>
+                    <span>Print on paper</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Navigation -->
+          <div class="step2-nav-footer">
+            <button type="button" id="btnBackToFormBottom" class="btn-secondary-large">
+              <i data-lucide="arrow-left"></i> Edit Details
+            </button>
+            <button type="button" id="btnNewOrderStep2" class="btn-primary-large">
+              <i data-lucide="plus-circle"></i> + Create New Order
+            </button>
+          </div>
+        </section>
+
+        <!-- RIGHT COLUMN: Bill-Book Slip Preview -->
+        <section class="preview-section">
+
+          <!-- Action Control Bar -->
+          <div class="preview-toolbar card">
+            <div class="toolbar-title">
+              <span class="live-dot"></span>
+              <h3>Order Slip Preview</h3>
+              <button type="button" id="btnQuickToggleSig" class="btn-sig-toggle active" title="Toggle Auto-Signature ON/OFF">
+                <i data-lucide="pen-tool"></i> <span id="sigToggleLabel">Sign: Auto ON</span>
+              </button>
+              <span class="size-indicator" id="sizeIndicatorBadge">5.5" × 4.25"</span>
+            </div>
+          </div>
 
         <!-- Physical Slip Simulation Viewport -->
         <div class="slip-viewport">
@@ -480,7 +585,8 @@
 
       </section>
 
-    </div>
+      </div> <!-- /.step2-layout-grid -->
+    </div> <!-- /#step2Section -->
   </main>
 
   <!-- ======================================================== -->
