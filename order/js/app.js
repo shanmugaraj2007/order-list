@@ -195,6 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderHistoryTable();
   updateSlipPreview();
   applyPaperSizeStyles();
+  syncFromMongoDb();
 });
 
 function initLucideIcons() {
@@ -244,15 +245,128 @@ function loadFromStorage() {
 
 function saveSettingsToStorage() {
   localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(state.settings));
+  syncSettingsToAtlas(state.settings);
 }
 
 function saveVehiclesToStorage() {
   localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(state.vehicles));
+  syncVehiclesToAtlas(state.vehicles);
 }
 
-function saveHistoryToStorage() {
+function saveHistoryToStorage(newOrder) {
   localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(state.history));
   updateHistoryBadge();
+  if (newOrder) {
+    saveOrderToAtlas(newOrder);
+  }
+}
+
+// =========================================================
+// MONGODB ATLAS CLOUD DATABASE INTEGRATION
+// =========================================================
+async function syncFromMongoDb() {
+  try {
+    const resOrders = await fetch('/api/orders');
+    if (resOrders.ok) {
+      const data = await resOrders.json();
+      if (data && data.success && Array.isArray(data.orders)) {
+        if (data.orders.length > 0) {
+          state.history = data.orders;
+          localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(state.history));
+          updateHistoryBadge();
+          renderHistoryTable();
+        }
+      }
+    }
+
+    const resVehicles = await fetch('/api/vehicles');
+    if (resVehicles.ok) {
+      const data = await resVehicles.json();
+      if (data && data.success && Array.isArray(data.vehicles) && data.vehicles.length > 0) {
+        state.vehicles = data.vehicles;
+        localStorage.setItem(STORAGE_KEYS.VEHICLES, JSON.stringify(state.vehicles));
+        renderSavedTruckChips();
+      }
+    }
+
+    const resSettings = await fetch('/api/settings');
+    if (resSettings.ok) {
+      const data = await resSettings.json();
+      if (data && data.success && data.settings) {
+        state.settings = { ...state.settings, ...data.settings };
+        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(state.settings));
+        updateSlipPreview();
+        applyPaperSizeStyles();
+      }
+    }
+
+    updateCloudStatusBadge(true);
+  } catch (err) {
+    console.warn('MongoDB Atlas API offline or standalone static mode:', err.message);
+    updateCloudStatusBadge(false);
+  }
+}
+
+function updateCloudStatusBadge(online) {
+  let badge = document.getElementById('cloudDbBadge');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'cloudDbBadge';
+    badge.className = 'cloud-status-badge';
+    const userPill = document.getElementById('userPillTag');
+    if (userPill && userPill.parentNode) {
+      userPill.parentNode.insertBefore(badge, userPill);
+    }
+  }
+  if (online) {
+    badge.innerHTML = '<i data-lucide="cloud-check"></i> <span>MongoDB Atlas</span>';
+    badge.title = 'Connected to MongoDB Atlas (orderlist.hufd3ul.mongodb.net)';
+    badge.classList.remove('cloud-offline');
+    badge.classList.add('cloud-online');
+  } else {
+    badge.innerHTML = '<i data-lucide="hard-drive"></i> <span>Local Mode</span>';
+    badge.title = 'Using local browser storage';
+    badge.classList.remove('cloud-online');
+    badge.classList.add('cloud-offline');
+  }
+  initLucideIcons();
+}
+
+async function saveOrderToAtlas(order) {
+  try {
+    await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order)
+    });
+  } catch (e) {}
+}
+
+async function deleteOrderFromAtlas(order) {
+  try {
+    const id = order._id || order.id;
+    await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+  } catch (e) {}
+}
+
+async function syncVehiclesToAtlas(vehicles) {
+  try {
+    await fetch('/api/vehicles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vehicles })
+    });
+  } catch (e) {}
+}
+
+async function syncSettingsToAtlas(settings) {
+  try {
+    await fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings)
+    });
+  } catch (e) {}
 }
 
 function updateHistoryBadge() {
@@ -350,9 +464,25 @@ function performLoginSuccess(remember) {
   showToast(`Welcome, ${session.displayName}!`, 'success');
 }
 
-function handlePinLogin() {
+async function handlePinLogin() {
   if (!el.inputPin) return;
   const enteredPin = el.inputPin.value.trim();
+
+  // Try Atlas API first
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'pin', pin: enteredPin })
+    });
+    const data = await res.json();
+    if (data && data.success && data.user) {
+      const remember = el.rememberMePin ? el.rememberMePin.checked : true;
+      performLoginSuccess(remember);
+      return;
+    }
+  } catch (err) {}
+
   if (enteredPin === state.auth.pin) {
     const remember = el.rememberMePin ? el.rememberMePin.checked : true;
     performLoginSuccess(remember);
@@ -363,10 +493,26 @@ function handlePinLogin() {
   }
 }
 
-function handlePassLogin() {
+async function handlePassLogin() {
   if (!el.inputUsername || !el.inputPassword) return;
   const user = el.inputUsername.value.trim();
   const pass = el.inputPassword.value;
+
+  // Try Atlas API first
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, password: pass })
+    });
+    const data = await res.json();
+    if (data && data.success && data.user) {
+      const remember = el.rememberMePass ? el.rememberMePass.checked : true;
+      performLoginSuccess(remember);
+      return;
+    }
+  } catch (err) {}
+
   if (user.toLowerCase() === state.auth.username.toLowerCase() && pass === state.auth.password) {
     const remember = el.rememberMePass ? el.rememberMePass.checked : true;
     performLoginSuccess(remember);
@@ -935,7 +1081,7 @@ function handleSaveAndGenerate() {
 
   // Add to beginning of history
   state.history.unshift(newOrderEntry);
-  saveHistoryToStorage();
+  saveHistoryToStorage(newOrderEntry);
 
   // Increment next auto order number in settings
   const currentNum = parseInt(state.currentOrder.orderNo, 10);
@@ -1132,7 +1278,8 @@ function renderHistoryTable(searchQuery = '') {
 
     // Delete handler
     tr.querySelector('[data-delete-id]').addEventListener('click', () => {
-      state.history = state.history.filter(h => h.id !== order.id);
+      deleteOrderFromAtlas(order);
+      state.history = state.history.filter(h => (h._id ? h._id !== order._id : h.id !== order.id));
       saveHistoryToStorage();
       renderHistoryTable(searchQuery);
       showToast('Order deleted', 'info');

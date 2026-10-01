@@ -411,7 +411,7 @@
       }
 
       // 1. Handle Login Submit
-      formLogin.addEventListener('submit', (e) => {
+      formLogin.addEventListener('submit', async (e) => {
         e.preventDefault();
         hideAlerts();
 
@@ -430,6 +430,31 @@
           return;
         }
 
+        // Try MongoDB Atlas Cloud Login first
+        try {
+          const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: userVal, password: passVal })
+          });
+          const data = await res.json();
+          if (data && data.success && data.user) {
+            showSuccess('Login successful (MongoDB Atlas)! Redirecting...');
+            setTimeout(() => {
+              establishSession(data.user, rememberMeLogin.checked);
+            }, 350);
+            return;
+          } else if (res.status === 401) {
+            showError(data.error || 'Invalid username or password. Please try again.');
+            loginPassword.value = '';
+            loginPassword.focus();
+            return;
+          }
+        } catch (apiErr) {
+          console.warn('MongoDB Atlas server offline, using local store:', apiErr);
+        }
+
+        // Local store fallback
         const users = getUsers();
         const matched = users.find(u =>
           u.username.toLowerCase() === userVal.toLowerCase() && u.password === passVal
@@ -448,7 +473,7 @@
       });
 
       // 2. Handle Sign Up Submit
-      formRegister.addEventListener('submit', (e) => {
+      formRegister.addEventListener('submit', async (e) => {
         e.preventDefault();
         hideAlerts();
 
@@ -501,6 +526,39 @@
           return;
         }
 
+        const newUser = {
+          username: userVal,
+          password: passVal,
+          displayName: nameVal,
+          pin: pinVal || '295712'
+        };
+
+        // Try MongoDB Atlas Cloud Registration
+        try {
+          const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newUser)
+          });
+          const data = await res.json();
+          if (data && data.success && data.user) {
+            const users = getUsers();
+            users.push(newUser);
+            saveUsers(users);
+            showSuccess('Account created in MongoDB Atlas! Logging in...');
+            setTimeout(() => {
+              establishSession(data.user, true);
+            }, 500);
+            return;
+          } else if (res.status === 409) {
+            showError(data.error || 'Username already taken. Please choose another username.');
+            regUsername.focus();
+            return;
+          }
+        } catch (apiErr) {
+          console.warn('MongoDB Atlas server offline, registering locally:', apiErr);
+        }
+
         const users = getUsers();
         const exists = users.some(u => u.username.toLowerCase() === userVal.toLowerCase());
         if (exists) {
@@ -508,13 +566,6 @@
           regUsername.focus();
           return;
         }
-
-        const newUser = {
-          username: userVal,
-          password: passVal,
-          displayName: nameVal,
-          pin: pinVal || '295712'
-        };
 
         users.push(newUser);
         saveUsers(users);
