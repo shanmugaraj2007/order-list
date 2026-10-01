@@ -5,7 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login & Sign Up | KPN Traders - Cement Order Slip Portal</title>
-  <meta name="description" content="Authorized Staff Login and Registration for KPN TRADERS Cement Order Slip Generator.">
+  <meta name="description"
+    content="Authorized Staff Login and Registration for KPN TRADERS Cement Order Slip Generator.">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -256,7 +257,7 @@
       const initialUsers = [DEFAULT_ADMIN];
       try {
         localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(initialUsers));
-      } catch (e) {}
+      } catch (e) { }
       return initialUsers;
     }
 
@@ -277,7 +278,7 @@
             window.location.replace('index.html');
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     checkActiveSession();
@@ -420,7 +421,7 @@
         }
 
         const users = getUsers();
-        const matched = users.find(u => 
+        const matched = users.find(u =>
           u.username.toLowerCase() === userVal.toLowerCase() && u.password === passVal
         );
 
