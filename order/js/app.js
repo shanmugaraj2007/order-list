@@ -1189,9 +1189,15 @@ async function handleDownloadImage() {
   }
 }
 
-// Instant WhatsApp dispatch format
-function handleShareWhatsApp() {
+// Instant WhatsApp dispatch format - Direct In-Memory Image Sharing (No Storage/Download Required)
+async function handleShareWhatsApp() {
   syncFormToState();
+  updateSlipPreview();
+
+  const slipElement = document.getElementById('billBookSlip');
+  if (!slipElement) return;
+
+  showToast('Preparing slip image for WhatsApp...', 'info');
 
   let formattedDate = state.currentOrder.date;
   if (formattedDate && formattedDate.includes('-')) {
@@ -1202,21 +1208,60 @@ function handleShareWhatsApp() {
   const typeText = state.currentOrder.cementType ? ` (${state.currentOrder.cementType})` : '';
   const noteText = state.currentOrder.remark ? `\n*Note:* ${state.currentOrder.remark}` : '';
 
-  const message = 
-`*${state.settings.companyName.toUpperCase()}*
-*Owner:* ${state.settings.ownerName} | ${state.settings.mobile}
-----------------------------------------
-*Date:* ${formattedDate}  |  *Order No:* ${state.currentOrder.orderNo}
-----------------------------------------
-*DEAR SIR,*
+  const shareText = 
+`*${state.settings.companyName.toUpperCase()} - CEMENT ORDER SLIP #${state.currentOrder.orderNo}*
+*Truck:* ${state.currentOrder.vehicleNumber}
+*Company:* ${state.currentOrder.cementCompany}${typeText}
+*Quantity:* ${state.currentOrder.quantity} ${state.currentOrder.unit}
+*Date:* ${formattedDate}${noteText}`;
 
-*${state.currentOrder.greeting} Sir,* I have sent my truck *${state.currentOrder.vehicleNumber}* to *${state.currentOrder.cementCompany}${typeText}*. Please load *${state.currentOrder.quantity} ${state.currentOrder.unit}* in it.${noteText}
+  try {
+    // 1. Generate crisp slip image directly in memory (RAM only, no disk saving!)
+    const canvas = await html2canvas(slipElement, {
+      scale: 2.5,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
 
-*For ${state.settings.companyName}*
-----------------------------------------`;
+    // 2. Convert directly to in-memory Blob without triggering any download
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.95));
+    if (!blob) throw new Error('Blob generation failed');
 
-  const encoded = encodeURIComponent(message);
-  window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+    const fileName = `Order_${state.currentOrder.orderNo}_${state.currentOrder.vehicleNumber.replace(/\s+/g, '_')}.png`;
+    const imageFile = new File([blob], fileName, { type: 'image/png' });
+
+    // 3. Mobile Web Share API: Directly attaches image to WhatsApp with ZERO storage impact
+    if (navigator.canShare && navigator.canShare({ files: [imageFile] })) {
+      await navigator.share({
+        files: [imageFile],
+        title: `${state.settings.companyName} Order #${state.currentOrder.orderNo}`,
+        text: shareText
+      });
+      showToast('Slip image sent directly to WhatsApp!', 'success');
+      return;
+    }
+
+    // 4. Desktop Clipboard Support: Copies slip image to clipboard for instant Ctrl+V into WhatsApp Web
+    if (navigator.clipboard && window.ClipboardItem) {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        showToast('Slip image copied! Press Ctrl+V in WhatsApp to paste.', 'success');
+      } catch (clipErr) {
+        console.warn('Clipboard write error:', clipErr);
+      }
+    }
+
+    // Open WhatsApp Web with order message
+    const encoded = encodeURIComponent(shareText);
+    window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+  } catch (err) {
+    console.error('WhatsApp share error:', err);
+    // Fallback to text message if browser blocks canvas/share
+    const encoded = encodeURIComponent(shareText);
+    window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+  }
 }
 
 // =========================================================
