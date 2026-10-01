@@ -167,6 +167,12 @@ const el = {
   
   // History Modal
   historySearchInput: document.getElementById('historySearchInput'),
+  historyFromDate: document.getElementById('historyFromDate'),
+  historyToDate: document.getElementById('historyToDate'),
+  btnFilterHistory: document.getElementById('btnFilterHistory'),
+  btnResetHistoryFilter: document.getElementById('btnResetHistoryFilter'),
+  btnDownloadHistoryCsv: document.getElementById('btnDownloadHistoryCsv'),
+  btnDownloadHistoryPdf: document.getElementById('btnDownloadHistoryPdf'),
   historyTableBody: document.getElementById('historyTableBody'),
   emptyHistoryMsg: document.getElementById('emptyHistoryMsg'),
   historyCountNote: document.getElementById('historyCountNote'),
@@ -871,10 +877,34 @@ function setupEventListeners() {
     });
   }
 
-  // History Search & Clear
-  el.historySearchInput.addEventListener('input', (e) => {
-    renderHistoryTable(e.target.value.toLowerCase());
-  });
+  // History Search, Date Range Filter & Download
+  if (el.historySearchInput) {
+    el.historySearchInput.addEventListener('input', () => renderHistoryTable());
+  }
+  if (el.historyFromDate) {
+    el.historyFromDate.addEventListener('change', () => renderHistoryTable());
+  }
+  if (el.historyToDate) {
+    el.historyToDate.addEventListener('change', () => renderHistoryTable());
+  }
+  if (el.btnFilterHistory) {
+    el.btnFilterHistory.addEventListener('click', () => renderHistoryTable());
+  }
+  if (el.btnResetHistoryFilter) {
+    el.btnResetHistoryFilter.addEventListener('click', () => {
+      if (el.historyFromDate) el.historyFromDate.value = '';
+      if (el.historyToDate) el.historyToDate.value = '';
+      if (el.historySearchInput) el.historySearchInput.value = '';
+      renderHistoryTable();
+      showToast('Date filter reset', 'info');
+    });
+  }
+  if (el.btnDownloadHistoryCsv) {
+    el.btnDownloadHistoryCsv.addEventListener('click', handleDownloadHistoryCsv);
+  }
+  if (el.btnDownloadHistoryPdf) {
+    el.btnDownloadHistoryPdf.addEventListener('click', handleDownloadHistoryReport);
+  }
 
   el.btnClearAllHistory.addEventListener('click', () => {
     if (state.history.length === 0) return;
@@ -1440,26 +1470,70 @@ async function handleShareWhatsApp() {
 }
 
 // =========================================================
-// ORDER HISTORY TABLE & ACTIONS
+// ORDER HISTORY TABLE, DATE FILTER & DOWNLOAD ACTIONS
 // =========================================================
-function renderHistoryTable(searchQuery = '') {
+function getFilteredHistory() {
+  const fromDate = el.historyFromDate ? el.historyFromDate.value : '';
+  const toDate = el.historyToDate ? el.historyToDate.value : '';
+  const search = el.historySearchInput ? el.historySearchInput.value.trim().toLowerCase() : '';
+
+  return state.history.filter(order => {
+    // 1. Text search filter
+    if (search) {
+      const combined = `${order.orderNo} ${order.date} ${order.company} ${order.vehicle} ${order.quantity} ${order.cementType || ''} ${order.remark || ''}`.toLowerCase();
+      if (!combined.includes(search)) return false;
+    }
+
+    // Normalize date to YYYY-MM-DD
+    let oDate = order.date || '';
+    if (oDate.includes('/')) {
+      const p = oDate.split('/');
+      if (p.length === 3) {
+        oDate = `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
+      }
+    }
+
+    // 2. From date check
+    if (fromDate && oDate < fromDate) {
+      return false;
+    }
+
+    // 3. To date check
+    if (toDate && oDate > toDate) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function renderHistoryTable() {
+  if (!el.historyTableBody) return;
   el.historyTableBody.innerHTML = '';
 
-  let filtered = state.history;
-  if (searchQuery) {
-    filtered = state.history.filter(item => {
-      const combined = `${item.orderNo} ${item.date} ${item.company} ${item.vehicle} ${item.quantity} ${item.cementType}`.toLowerCase();
-      return combined.includes(searchQuery);
-    });
-  }
+  const fromDate = el.historyFromDate ? el.historyFromDate.value : '';
+  const toDate = el.historyToDate ? el.historyToDate.value : '';
+  const search = el.historySearchInput ? el.historySearchInput.value.trim().toLowerCase() : '';
+
+  const filtered = getFilteredHistory();
 
   if (filtered.length === 0) {
-    el.emptyHistoryMsg.style.display = 'block';
+    if (el.emptyHistoryMsg) el.emptyHistoryMsg.style.display = 'block';
   } else {
-    el.emptyHistoryMsg.style.display = 'none';
+    if (el.emptyHistoryMsg) el.emptyHistoryMsg.style.display = 'none';
   }
 
-  el.historyCountNote.textContent = `${state.history.length} Total Orders Saved`;
+  if (el.historyCountNote) {
+    if (fromDate || toDate || search) {
+      let label = `Showing ${filtered.length} of ${state.history.length} Orders`;
+      if (fromDate && toDate) label += ` (${fromDate} to ${toDate})`;
+      else if (fromDate) label += ` (from ${fromDate})`;
+      else if (toDate) label += ` (until ${toDate})`;
+      el.historyCountNote.textContent = label;
+    } else {
+      el.historyCountNote.textContent = `${state.history.length} Total Orders Saved`;
+    }
+  }
 
   filtered.forEach(order => {
     let displayDate = order.date;
@@ -1478,10 +1552,10 @@ function renderHistoryTable(searchQuery = '') {
       <td>${order.cementType || '-'}</td>
       <td class="text-right">
         <div class="history-actions">
-          <button type="button" class="hist-btn" data-load-id="${order.id}" title="Load & View Slip">
+          <button type="button" class="hist-btn" data-load-id="${order.id || order._id}" title="Load & View Slip">
             <i data-lucide="eye"></i> View
           </button>
-          <button type="button" class="hist-btn" data-delete-id="${order.id}" title="Delete Record">
+          <button type="button" class="hist-btn" data-delete-id="${order.id || order._id}" title="Delete Record">
             <i data-lucide="trash-2"></i>
           </button>
         </div>
@@ -1500,7 +1574,7 @@ function renderHistoryTable(searchQuery = '') {
       deleteOrderFromAtlas(order);
       state.history = state.history.filter(h => (h._id ? h._id !== order._id : h.id !== order.id));
       saveHistoryToStorage();
-      renderHistoryTable(searchQuery);
+      renderHistoryTable();
       showToast('Order deleted', 'info');
     });
 
@@ -1508,6 +1582,161 @@ function renderHistoryTable(searchQuery = '') {
   });
 
   initLucideIcons();
+}
+
+function handleDownloadHistoryCsv() {
+  const filtered = getFilteredHistory();
+  if (filtered.length === 0) {
+    showToast('No orders found to download for the selected period', 'danger');
+    return;
+  }
+
+  const fromDate = el.historyFromDate ? el.historyFromDate.value : '';
+  const toDate = el.historyToDate ? el.historyToDate.value : '';
+
+  const headers = ['Order No', 'Date', 'Cement Company', 'Truck / Vehicle No', 'Quantity', 'Unit', 'Cement Grade', 'Driver Note / Remarks'];
+
+  const rows = filtered.map(order => [
+    order.orderNo || '',
+    order.date || '',
+    order.company || '',
+    order.vehicle || '',
+    order.quantity || '',
+    order.unit || 'Bags',
+    order.cementType || '',
+    order.remark || ''
+  ]);
+
+  const csvContent = [
+    headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(','),
+    ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
+  ].join('\r\n');
+
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  let filename = 'Cement_Orders';
+  if (fromDate && toDate) {
+    filename += `_${fromDate}_to_${toDate}`;
+  } else if (fromDate) {
+    filename += `_from_${fromDate}`;
+  } else if (toDate) {
+    filename += `_until_${toDate}`;
+  } else {
+    const today = new Date().toISOString().split('T')[0];
+    filename += `_All_${today}`;
+  }
+  filename += '.csv';
+
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  showToast(`Downloaded ${filtered.length} orders as CSV / Excel!`, 'success');
+}
+
+function handleDownloadHistoryReport() {
+  const filtered = getFilteredHistory();
+  if (filtered.length === 0) {
+    showToast('No orders found to print for the selected period', 'danger');
+    return;
+  }
+
+  const fromDate = el.historyFromDate ? el.historyFromDate.value : '';
+  const toDate = el.historyToDate ? el.historyToDate.value : '';
+  let periodText = 'All Time';
+  if (fromDate && toDate) periodText = `${fromDate} to ${toDate}`;
+  else if (fromDate) periodText = `From ${fromDate}`;
+  else if (toDate) periodText = `Until ${toDate}`;
+
+  const totalBags = filtered
+    .filter(o => !o.unit || o.unit.toLowerCase() === 'bags')
+    .reduce((sum, o) => sum + (parseFloat(o.quantity) || 0), 0);
+
+  const totalTons = filtered
+    .filter(o => o.unit && o.unit.toLowerCase() === 'tons')
+    .reduce((sum, o) => sum + (parseFloat(o.quantity) || 0), 0);
+
+  let summaryTotalText = `${totalBags} Bags`;
+  if (totalTons > 0) summaryTotalText += ` + ${totalTons} Tons`;
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    showToast('Please allow popups to generate print report', 'danger');
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Order History Report - ${state.settings.companyName}</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; padding: 25px; color: #1e293b; background: #fff; }
+        .header { border-bottom: 2px solid #0284c7; padding-bottom: 15px; margin-bottom: 20px; }
+        .comp-title { font-size: 22px; font-weight: 800; color: #0284c7; margin: 0; text-transform: uppercase; }
+        .comp-sub { font-size: 12px; color: #64748b; margin: 3px 0 0; }
+        .report-meta { display: flex; justify-content: space-between; margin-top: 15px; font-size: 13px; background: #f1f5f9; padding: 10px 14px; border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+        th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
+        th { background: #f8fafc; font-weight: 700; color: #334155; }
+        tr:nth-child(even) { background: #f8fafc; }
+        .total-box { margin-top: 15px; text-align: right; font-size: 14px; font-weight: 700; color: #0f172a; }
+        @media print {
+          body { padding: 0; }
+          @page { margin: 1.5cm; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1 class="comp-title">${state.settings.companyName}</h1>
+        <p class="comp-sub">${state.settings.address || ''}</p>
+        <div class="report-meta">
+          <div><strong>Report Period:</strong> ${periodText}</div>
+          <div><strong>Total Orders:</strong> ${filtered.length} | <strong>Total Quantity:</strong> ${summaryTotalText}</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Order No</th>
+            <th>Date</th>
+            <th>Cement Company</th>
+            <th>Truck / Vehicle No</th>
+            <th>Quantity</th>
+            <th>Grade</th>
+            <th>Driver Note / Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.map(o => `
+            <tr>
+              <td><strong>#${o.orderNo}</strong></td>
+              <td>${o.date}</td>
+              <td>${o.company}</td>
+              <td><strong>${o.vehicle}</strong></td>
+              <td>${o.quantity} ${o.unit || 'Bags'}</td>
+              <td>${o.cementType || '-'}</td>
+              <td>${o.remark || '-'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <div class="total-box">
+        Grand Total: ${filtered.length} Orders (${summaryTotalText})
+      </div>
+      <script>
+        window.onload = function() { window.print(); }
+      </script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
 }
 
 function loadOrderIntoSlip(order) {

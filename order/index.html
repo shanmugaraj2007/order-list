@@ -794,6 +794,35 @@
           </div>
         </div>
 
+        <!-- Date Range Filter & Download Bar -->
+        <div class="history-filter-bar">
+          <div class="date-range-group">
+            <div class="date-field">
+              <label for="historyFromDate"><i data-lucide="calendar"></i> From Date</label>
+              <input type="date" id="historyFromDate">
+            </div>
+            <div class="date-field">
+              <label for="historyToDate"><i data-lucide="calendar"></i> To Date</label>
+              <input type="date" id="historyToDate">
+            </div>
+          </div>
+
+          <div class="history-filter-actions">
+            <button type="button" id="btnFilterHistory" class="btn-primary-sm" title="Apply Date Filter">
+              <i data-lucide="filter"></i> Filter
+            </button>
+            <button type="button" id="btnResetHistoryFilter" class="btn-ghost-sm" title="Reset Date Filter">
+              <i data-lucide="rotate-ccw"></i> Reset
+            </button>
+            <button type="button" id="btnDownloadHistoryCsv" class="btn-success-sm" title="Download filtered orders as CSV/Excel">
+              <i data-lucide="file-spreadsheet"></i> Download CSV / Excel
+            </button>
+            <button type="button" id="btnDownloadHistoryPdf" class="btn-primary-sm" title="Print or save PDF summary report">
+              <i data-lucide="printer"></i> Print / PDF Report
+            </button>
+          </div>
+        </div>
+
         <div class="history-table-container">
           <table class="history-table" id="historyTable">
             <thead>
