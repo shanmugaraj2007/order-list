@@ -27,6 +27,7 @@
       background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0b1120 100%);
       padding: 1.5rem;
     }
+
     .standalone-login .auth-card {
       max-width: 440px;
       width: 100%;
@@ -68,7 +69,8 @@
       <div class="form-group text-center">
         <label for="inputPin">Enter 4-Digit Security PIN</label>
         <div class="pin-input-container">
-          <input type="password" id="inputPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="••••" autofocus autocomplete="current-password">
+          <input type="password" id="inputPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="••••"
+            autofocus autocomplete="current-password">
         </div>
         <p class="auth-field-hint">Fast 4-digit PIN for instant godown access</p>
       </div>
@@ -101,7 +103,8 @@
         <div class="input-with-icon input-password-group">
           <i data-lucide="lock"></i>
           <input type="password" id="inputPassword" placeholder="••••••••" autocomplete="current-password">
-          <button type="button" class="btn-eye-toggle" id="btnTogglePasswordEye" title="Show/Hide Password" tabindex="-1">
+          <button type="button" class="btn-eye-toggle" id="btnTogglePasswordEye" title="Show/Hide Password"
+            tabindex="-1">
             <i data-lucide="eye" id="eyeIcon"></i>
           </button>
         </div>
@@ -127,7 +130,8 @@
         <span>Default Credentials:</span>
       </div>
       <div class="hint-body">
-        <span>PIN: <strong>1234</strong></span> • <span>User: <strong>admin</strong></span> • <span>Pass: <strong>kpn123</strong></span>
+        <span>PIN: <strong>1234</strong></span> • <span>User: <strong>admin</strong></span> • <span>Pass:
+          <strong>kpn123</strong></span>
       </div>
       <button type="button" class="btn-quick-autofill" id="btnQuickDemoFill">
         <i data-lucide="sparkles"></i> 1-Click Auto Fill & Login
@@ -166,7 +170,7 @@
         if (session) {
           window.location.replace('index.html');
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     checkActiveSession();
