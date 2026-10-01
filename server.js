@@ -21,8 +21,13 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static frontend files
-app.use(express.static(__dirname));
+// Root route: Always serve login.html first
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+// Serve static frontend files (without auto-serving index.html at root)
+app.use(express.static(__dirname, { index: false }));
 
 let db = null;
 let client = null;
@@ -328,9 +333,9 @@ app.post('/api/vehicles', requireDb, async (req, res) => {
   }
 });
 
-// Root redirects
+// Root entry: always serve login.html first
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'login.html'));
 });
 
 // Start Server & Connect to Database

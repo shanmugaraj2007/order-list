@@ -8,6 +8,25 @@
   <meta name="description"
     content="Fast, mobile-friendly traditional cement order slip generator for godown and truck loading. Compact bill-book paper size printing and PDF download.">
 
+  <!-- Immediate Auth Guard: Must be logged in before viewing slip generator -->
+  <script>
+    (function () {
+      try {
+        const rawSession = sessionStorage.getItem('cement_order_session_v1') || localStorage.getItem('cement_order_session_v1');
+        if (!rawSession) {
+          window.location.replace('login.html');
+          return;
+        }
+        const session = JSON.parse(rawSession);
+        if (!session || !session.authenticated) {
+          window.location.replace('login.html');
+        }
+      } catch (e) {
+        window.location.replace('login.html');
+      }
+    })();
+  </script>
+
   <!-- Google Fonts: Inter for UI, Roboto Mono & Courier Prime for authentic bill-book typography -->
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">

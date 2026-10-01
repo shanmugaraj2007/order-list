@@ -393,7 +393,7 @@ function checkAuthSession() {
   } catch (e) {
     console.error('Session check error:', e);
   }
-  showLoginScreen('pin');
+  window.location.replace('login.html');
   return false;
 }
 
@@ -529,8 +529,7 @@ function handleLogout() {
     sessionStorage.removeItem(STORAGE_KEYS.SESSION);
   } catch (e) {}
   state.session = null;
-  showToast('Logged out successfully');
-  showLoginScreen('pin');
+  window.location.replace('login.html');
 }
 
 // =========================================================
