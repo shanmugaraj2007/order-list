@@ -18,7 +18,7 @@ const STORAGE_KEYS = {
 const DEFAULT_AUTH = {
   username: 'admin',
   password: 'kpn123',
-  pin: '1234',
+  pin: '295712',
   displayName: 'KPN Admin'
 };
 
@@ -211,6 +211,10 @@ function loadFromStorage() {
     const storedAuth = localStorage.getItem(STORAGE_KEYS.AUTH);
     if (storedAuth) {
       state.auth = { ...DEFAULT_AUTH, ...JSON.parse(storedAuth) };
+      if (state.auth.pin === '1234') {
+        state.auth.pin = '295712';
+        localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(state.auth));
+      }
     }
 
     const storedSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
@@ -353,7 +357,7 @@ function handlePinLogin() {
     const remember = el.rememberMePin ? el.rememberMePin.checked : true;
     performLoginSuccess(remember);
   } else {
-    showAuthError('Invalid 4-digit PIN. (Default: 1234)');
+    showAuthError('Invalid Security PIN. Please try again.');
     el.inputPin.value = '';
     el.inputPin.focus();
   }
@@ -367,7 +371,7 @@ function handlePassLogin() {
     const remember = el.rememberMePass ? el.rememberMePass.checked : true;
     performLoginSuccess(remember);
   } else {
-    showAuthError('Invalid username or password. (Default: admin / kpn123)');
+    showAuthError('Invalid username or password. Please try again.');
     el.inputPassword.value = '';
     el.inputPassword.focus();
   }
@@ -704,7 +708,8 @@ function setupEventListeners() {
   }
   if (el.inputPin) {
     el.inputPin.addEventListener('input', (e) => {
-      if (e.target.value.length === 4) {
+      const pinLength = (state.auth.pin || '295712').length;
+      if (e.target.value.length === pinLength) {
         handlePinLogin();
       }
     });

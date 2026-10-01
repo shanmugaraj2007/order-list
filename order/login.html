@@ -205,10 +205,10 @@
       </div>
 
       <div class="form-group">
-        <label for="regPin">4-Digit Security PIN (Optional)</label>
+        <label for="regPin">Security PIN (Optional)</label>
         <div class="input-with-icon">
           <i data-lucide="key-round"></i>
-          <input type="password" id="regPin" maxlength="4" pattern="[0-9]*" inputmode="numeric" placeholder="e.g. 1234">
+          <input type="password" id="regPin" maxlength="6" pattern="[0-9]*" inputmode="numeric" placeholder="e.g. 295712">
         </div>
         <p class="auth-field-hint">Used for quick authorization</p>
       </div>
@@ -237,24 +237,36 @@
     const DEFAULT_ADMIN = {
       username: 'admin',
       password: 'kpn123',
-      pin: '1234',
+      pin: '295712',
       displayName: 'KPN Admin'
     };
 
+    // Retrieve registered user list
     function getUsers() {
       try {
         const stored = localStorage.getItem(STORAGE_KEY_USERS);
         if (stored) {
           const list = JSON.parse(stored);
-          if (Array.isArray(list) && list.length > 0) return list;
+          if (Array.isArray(list) && list.length > 0) {
+            let updated = false;
+            list.forEach(u => {
+              if (u.username === 'admin' && u.pin === '1234') {
+                u.pin = '295712';
+                updated = true;
+              }
+            });
+            if (updated) saveUsers(list);
+            return list;
+          }
         }
       } catch (e) {
         console.error('Failed reading user store:', e);
       }
+      // Seed initial default admin if empty
       const initialUsers = [DEFAULT_ADMIN];
       try {
         localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(initialUsers));
-      } catch (e) {}
+      } catch (e) { }
       return initialUsers;
     }
 
@@ -478,8 +490,8 @@
           return;
         }
 
-        if (pinVal && (pinVal.length !== 4 || !/^\d{4}$/.test(pinVal))) {
-          showError('Security PIN must be exactly 4 numbers (0-9).');
+        if (pinVal && (pinVal.length < 4 || pinVal.length > 6 || !/^\d+$/.test(pinVal))) {
+          showError('Security PIN must be 4 to 6 numbers (0-9).');
           regPin.focus();
           return;
         }
@@ -496,7 +508,7 @@
           username: userVal,
           password: passVal,
           displayName: nameVal,
-          pin: pinVal || '1234'
+          pin: pinVal || '295712'
         };
 
         users.push(newUser);
