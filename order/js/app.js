@@ -398,7 +398,8 @@ function updateHistoryBadge() {
 // =========================================================
 function checkAuthSession() {
   try {
-    const rawSession = localStorage.getItem(STORAGE_KEYS.SESSION) || sessionStorage.getItem(STORAGE_KEYS.SESSION);
+    localStorage.removeItem(STORAGE_KEYS.SESSION);
+    const rawSession = sessionStorage.getItem(STORAGE_KEYS.SESSION);
     if (rawSession) {
       const session = JSON.parse(rawSession);
       if (session && session.authenticated) {
@@ -460,7 +461,7 @@ function showAuthError(msg) {
   el.authErrorBox.classList.add('shake');
 }
 
-function performLoginSuccess(remember) {
+function performLoginSuccess() {
   const session = {
     authenticated: true,
     username: state.auth.username,
@@ -469,13 +470,8 @@ function performLoginSuccess(remember) {
   };
   state.session = session;
 
-  if (remember) {
-    localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(session));
-    sessionStorage.removeItem(STORAGE_KEYS.SESSION);
-  } else {
-    sessionStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(session));
-    localStorage.removeItem(STORAGE_KEYS.SESSION);
-  }
+  sessionStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(session));
+  localStorage.removeItem(STORAGE_KEYS.SESSION);
 
   updateNavUser(session.displayName);
   hideLoginScreen();
@@ -495,15 +491,13 @@ async function handlePinLogin() {
     });
     const data = await res.json();
     if (data && data.success && data.user) {
-      const remember = el.rememberMePin ? el.rememberMePin.checked : true;
-      performLoginSuccess(remember);
+      performLoginSuccess();
       return;
     }
   } catch (err) {}
 
   if (enteredPin === state.auth.pin) {
-    const remember = el.rememberMePin ? el.rememberMePin.checked : true;
-    performLoginSuccess(remember);
+    performLoginSuccess();
   } else {
     showAuthError('Invalid Security PIN. Please try again.');
     el.inputPin.value = '';
@@ -525,15 +519,13 @@ async function handlePassLogin() {
     });
     const data = await res.json();
     if (data && data.success && data.user) {
-      const remember = el.rememberMePass ? el.rememberMePass.checked : true;
-      performLoginSuccess(remember);
+      performLoginSuccess();
       return;
     }
   } catch (err) {}
 
   if (user.toLowerCase() === state.auth.username.toLowerCase() && pass === state.auth.password) {
-    const remember = el.rememberMePass ? el.rememberMePass.checked : true;
-    performLoginSuccess(remember);
+    performLoginSuccess();
   } else {
     showAuthError('Invalid username or password. Please try again.');
     el.inputPassword.value = '';

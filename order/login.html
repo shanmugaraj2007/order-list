@@ -147,9 +147,9 @@
         </div>
       </div>
 
-      <div class="auth-remember-row">
+      <div class="auth-remember-row" style="display: none;">
         <label class="checkbox-label" for="rememberMeLogin">
-          <input type="checkbox" id="rememberMeLogin" checked>
+          <input type="checkbox" id="rememberMeLogin">
           <span>Remember this device</span>
         </label>
       </div>
@@ -369,7 +369,7 @@
       setupPasswordToggle(btnToggleLoginPass, loginPassword);
       setupPasswordToggle(btnToggleRegPass, regPassword);
 
-      function establishSession(user, remember) {
+      function establishSession(user) {
         const payload = JSON.stringify({
           authenticated: true,
           username: user.username,
@@ -377,18 +377,14 @@
           loginAt: new Date().toISOString()
         });
 
-        if (remember) {
-          localStorage.setItem(STORAGE_KEY_SESSION, payload);
-          sessionStorage.removeItem(STORAGE_KEY_SESSION);
-        } else {
-          sessionStorage.setItem(STORAGE_KEY_SESSION, payload);
-          localStorage.removeItem(STORAGE_KEY_SESSION);
-        }
+        // Store active session only in sessionStorage so whenever opening via URL, login is required
+        sessionStorage.setItem(STORAGE_KEY_SESSION, payload);
+        localStorage.removeItem(STORAGE_KEY_SESSION);
 
         localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify({
           username: user.username,
           password: user.password,
-          pin: user.pin || '1234',
+          pin: user.pin || '295712',
           displayName: user.displayName || user.username
         }));
 
@@ -425,7 +421,7 @@
           if (data && data.success && data.user) {
             showSuccess('Login successful (MongoDB Atlas)! Redirecting...');
             setTimeout(() => {
-              establishSession(data.user, rememberMeLogin.checked);
+              establishSession(data.user);
             }, 350);
             return;
           } else if (res.status === 401) {
@@ -447,7 +443,7 @@
         if (matched) {
           showSuccess('Login successful! Redirecting...');
           setTimeout(() => {
-            establishSession(matched, rememberMeLogin.checked);
+            establishSession(matched);
           }, 350);
         } else {
           showError('Invalid username or password. Please try again.');
@@ -530,7 +526,7 @@
             saveUsers(users);
             showSuccess('Account created in MongoDB Atlas! Logging in...');
             setTimeout(() => {
-              establishSession(data.user, true);
+              establishSession(data.user);
             }, 500);
             return;
           } else if (res.status === 409) {
@@ -555,7 +551,7 @@
 
         showSuccess('Account created successfully! Logging you in...');
         setTimeout(() => {
-          establishSession(newUser, true);
+          establishSession(newUser);
         }, 600);
       });
     });

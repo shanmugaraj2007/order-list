@@ -8,11 +8,13 @@
   <meta name="description"
     content="Fast, mobile-friendly traditional cement order slip generator for godown and truck loading. Compact bill-book paper size printing and PDF download.">
 
-  <!-- Immediate Auth Guard: Must be logged in before viewing slip generator -->
+  <!-- Immediate Auth Guard: Must be logged in via login.html before viewing slip generator -->
   <script>
     (function () {
       try {
-        const rawSession = sessionStorage.getItem('cement_order_session_v1') || localStorage.getItem('cement_order_session_v1');
+        // Clear any old persistent session from localStorage so URL access always prompts login
+        localStorage.removeItem('cement_order_session_v1');
+        const rawSession = sessionStorage.getItem('cement_order_session_v1');
         if (!rawSession) {
           window.location.replace('login.html');
           return;
